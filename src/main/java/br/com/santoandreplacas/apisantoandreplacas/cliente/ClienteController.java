@@ -1,11 +1,13 @@
 package br.com.santoandreplacas.apisantoandreplacas.cliente;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/clientes")
+@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'ATENDENTE')")
 public class ClienteController {
 
     private final ClienteService clienteService;

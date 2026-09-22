@@ -44,27 +44,34 @@
 - `PedidoStatusHistorico`
 - Tratamento de erro centralizado
 - Autenticação JWT + filtro de segurança
+- **Autorização por papel** (`@PreAuthorize`, `@EnableMethodSecurity` em
+  `SecurityConfig`): `Cliente`, `Veiculo` e `Pedido` liberados para
+  `ADMIN`/`GERENTE`/`ATENDENTE` em todos os endpoints; `Servico` liberado
+  para os três papéis em leitura (`GET`), mas criar/atualizar/deletar
+  (catálogo e preço) restrito a `ADMIN`/`GERENTE`. **Atenção:** a spec não
+  estava disponível no repo no momento da implementação (arquivo
+  `Spec — Santo André Placas.md` referenciado mas ausente) — essa matriz de
+  permissões foi uma decisão razoável meu, não uma tabela extraída da
+  seção 8. Revisar contra a spec original e ajustar se divergir.
 
 ## ⏳ Pendente (ordem de prioridade, seguindo a spec)
 
-1. **Autorização por papel** (`@PreAuthorize`) — login funciona, mas rotas
-   ainda não são restringidas por `ADMIN`/`GERENTE`/`ATENDENTE` (tabela da
-   seção 8 da spec).
-2. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
+1. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
    estiver pronto, para já testar login de ponta a ponta no ambiente real.
-3. **Módulo Estoque** — próximo passo da ordem da spec (seção 3 e 4). É onde
+   Também vale testar a autorização por papel end-to-end nesse momento.
+2. **Módulo Estoque** — próximo passo da ordem da spec (seção 3 e 4). É onde
    o gancho comentado no `PedidoService` (baixa automática de estoque ao
    mudar status para `EM_PROCESSAMENTO`) precisa ser implementado de fato.
-4. **Financeiro básico** (módulo 7) — pagamento por pedido, fechamento de
+3. **Financeiro básico** (módulo 7) — pagamento por pedido, fechamento de
    caixa.
-5. **Dashboard e relatórios** (módulo 8) — provavelmente onde
+4. **Dashboard e relatórios** (módulo 8) — provavelmente onde
    `groupingBy`/streams mais avançados voltam a aparecer.
-6. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
+5. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
    conforme seção 7 da spec), testar autenticação de fato.
-7. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
+6. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.
-8. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
+7. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
    `Pedido` tem esse padrão; fechar essa lacuna nos outros três.
 
 ## Fundamentos de Java já estudados
