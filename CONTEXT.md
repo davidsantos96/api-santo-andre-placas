@@ -45,34 +45,55 @@
 - Tratamento de erro centralizado
 - Autenticação JWT + filtro de segurança
 - **Autorização por papel** (`@PreAuthorize`, `@EnableMethodSecurity` em
-  `SecurityConfig`): `Cliente`, `Veiculo` e `Pedido` liberados para
-  `ADMIN`/`GERENTE`/`ATENDENTE` em todos os endpoints; `Servico` liberado
-  para os três papéis em leitura (`GET`), mas criar/atualizar/deletar
-  (catálogo e preço) restrito a `ADMIN`/`GERENTE`. **Atenção:** a spec não
-  estava disponível no repo no momento da implementação (arquivo
-  `Spec — Santo André Placas.md` referenciado mas ausente) — essa matriz de
-  permissões foi uma decisão razoável meu, não uma tabela extraída da
-  seção 8. Revisar contra a spec original e ajustar se divergir.
+  `SecurityConfig`): `Cliente`, `Veiculo`, `Pedido` e `Estoque` liberados
+  para `ADMIN`/`GERENTE`/`ATENDENTE` em todos os endpoints de leitura;
+  `Servico` liberado para os três papéis em leitura (`GET`). Escrita
+  restrita a `ADMIN`/`GERENTE` em: catálogo de serviços (criar/atualizar/
+  deletar), cadastro de item de estoque, movimentação manual de estoque e
+  vínculo serviço↔item. **Decisão registrada:** a spec (seção 8) é mais
+  restritiva — diz que ATENDENTE só "cria/edita pedidos" e "consulta
+  veículos" (não cita Cliente, e Veículo é só leitura). Perguntei e ficou
+  combinado **manter acesso amplo**: ATENDENTE mantém `GET`+`POST` em
+  Cliente e Veículo, porque na prática o balcão precisa cadastrar cliente/
+  veículo novos fora do fluxo de `/pedidos/completo` também. Se isso mudar,
+  é só remover `ATENDENTE` do `@PreAuthorize` de `ClienteController` e do
+  `POST` de `VeiculoController`.
+- **Módulo Estoque** (spec seção 3, 4 e endpoints da seção 5, pacote
+  `estoque`): `ItemEstoque` (nome, quantidade, quantidadeMinima),
+  `MovimentacaoEstoque` (ENTRADA/SAIDA, ligada a um `Pedido` opcional).
+  Endpoints: `GET/POST /api/estoque/itens`, `GET /api/estoque/itens/baixo-
+  estoque`, `POST /api/estoque/movimentacoes`.
+  **Gap de spec preenchido:** a seção 3 não define como um `Servico` se
+  liga aos itens de estoque que consome, mas a seção 4 exige baixa
+  automática "vinculada ao serviço do pedido". Criei a entidade
+  `ServicoItemEstoque` (servico, itemEstoque, quantidadeNecessaria) e os
+  endpoints `GET/POST /api/estoque/vinculos` (não estão na spec original)
+  para tornar a regra funcional. `PedidoService.mudarStatus` chama
+  `EstoqueService.baixarEstoquePorPedido` quando o novo status é
+  `EM_PROCESSAMENTO`; se faltar estoque, lança `IllegalStateException`
+  (vira `400`) e a transação inteira do pedido é revertida — ainda não
+  testado ponta a ponta via HTTP porque não há usuário seedado para gerar
+  JWT (ver pendência 1).
 
 ## ⏳ Pendente (ordem de prioridade, seguindo a spec)
 
 1. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
    estiver pronto, para já testar login de ponta a ponta no ambiente real.
-   Também vale testar a autorização por papel end-to-end nesse momento.
-2. **Módulo Estoque** — próximo passo da ordem da spec (seção 3 e 4). É onde
-   o gancho comentado no `PedidoService` (baixa automática de estoque ao
-   mudar status para `EM_PROCESSAMENTO`) precisa ser implementado de fato.
-3. **Financeiro básico** (módulo 7) — pagamento por pedido, fechamento de
+   Também vale testar autorização por papel e a baixa automática de
+   estoque end-to-end nesse momento.
+2. **Financeiro básico** (módulo 7) — pagamento por pedido, fechamento de
    caixa.
-4. **Dashboard e relatórios** (módulo 8) — provavelmente onde
+3. **Dashboard e relatórios** (módulo 8) — provavelmente onde
    `groupingBy`/streams mais avançados voltam a aparecer.
-5. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
+4. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
    conforme seção 7 da spec), testar autenticação de fato.
-6. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
+5. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.
-7. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
-   `Pedido` tem esse padrão; fechar essa lacuna nos outros três.
+6. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
+   `Pedido` tem esse padrão; fechar essa lacuna nos outros três. Vale
+   estender também a `ItemEstoque` e `ServicoItemEstoque`, que hoje também
+   recebem a entidade JPA crua no `POST`.
 
 ## Fundamentos de Java já estudados
 

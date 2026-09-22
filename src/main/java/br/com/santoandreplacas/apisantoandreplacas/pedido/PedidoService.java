@@ -10,6 +10,7 @@ import br.com.santoandreplacas.apisantoandreplacas.veiculo.Veiculo;
 import br.com.santoandreplacas.apisantoandreplacas.veiculo.VeiculoRepository;
 import br.com.santoandreplacas.apisantoandreplacas.servico.Servico;
 import br.com.santoandreplacas.apisantoandreplacas.servico.ServicoRepository;
+import br.com.santoandreplacas.apisantoandreplacas.estoque.EstoqueService;
 
 @Service
 public class PedidoService {
@@ -19,17 +20,20 @@ public class PedidoService {
     private final VeiculoRepository veiculoRepository;
     private final ServicoRepository servicoRepository;
     private final PedidoStatusHistoricoRepository historicoRepository;
+    private final EstoqueService estoqueService;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          ClienteRepository clienteRepository,
                          VeiculoRepository veiculoRepository,
                          ServicoRepository servicoRepository,
-                         PedidoStatusHistoricoRepository historicoRepository) {
+                         PedidoStatusHistoricoRepository historicoRepository,
+                         EstoqueService estoqueService) {
         this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
         this.servicoRepository = servicoRepository;
         this.historicoRepository = historicoRepository;
+        this.estoqueService = estoqueService;
     }
 
     @Transactional(readOnly = true)
@@ -60,6 +64,7 @@ public class PedidoService {
         return pedidoSalvo;
     }
 
+    @Transactional
     public Pedido mudarStatus(Long id, StatusPedido novoStatus) {
         Pedido pedido = buscarPorId(id);
         StatusPedido statusAnterior = pedido.getStatus();
@@ -70,6 +75,10 @@ public class PedidoService {
         pedido.setAtualizadoEm(LocalDateTime.now());
 
         registrarHistorico(pedido, statusAnterior, novoStatus);
+
+        if (novoStatus == StatusPedido.EM_PROCESSAMENTO) {
+            estoqueService.baixarEstoquePorPedido(pedido);
+        }
 
         return pedidoRepository.save(pedido);
     }
