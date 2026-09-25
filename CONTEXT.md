@@ -13,6 +13,16 @@
 - Autenticação JWT funcionando: entidade `Usuario`, senha com hash BCrypt,
   geração/validação de token, filtro de segurança protegendo todas as rotas
   exceto `/api/auth/**`. Ainda **sem seed de usuário** (ver pendências).
+- **Swagger UI** (`springdoc-openapi-starter-webmvc-ui` 3.1.1, compatível com
+  Spring Boot 4): `http://localhost:8080/swagger-ui/index.html`. Rotas
+  `/swagger-ui/**` e `/v3/api-docs/**` liberadas em `SecurityConfig`. Botão
+  "Authorize" já configurado com esquema `bearerAuth` (Bearer JWT) via
+  `config/OpenApiConfig` — colar o token do `POST /api/auth/login` ali
+  autentica todas as chamadas feitas pela própria UI. Verificado subindo o
+  app e abrindo no navegador: todos os controllers/endpoints aparecem e o
+  modal de auth mostra "bearerAuth (http, Bearer)" corretamente. Usado para
+  testar end-to-end enquanto não há front React (spec deixa o front pra
+  depois — seção 9).
 
 ## Padrões já estabelecidos (manter consistência)
 
