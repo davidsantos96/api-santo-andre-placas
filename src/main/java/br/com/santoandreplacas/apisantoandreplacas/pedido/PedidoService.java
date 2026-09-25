@@ -1,5 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.pedido;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -42,8 +44,8 @@ public class PedidoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Pedido> listarTodos() {
-        return pedidoRepository.findAll();
+    public Page<Pedido> listar(StatusPedido status, Long clienteId, LocalDateTime de, LocalDateTime ate, Pageable pageable) {
+        return pedidoRepository.buscar(status, clienteId, de, ate, pageable);
     }
 
     @Transactional(readOnly = true)

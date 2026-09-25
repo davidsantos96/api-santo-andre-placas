@@ -134,52 +134,80 @@
 
 Recebi `Spec — Implementação React (Painel Santo André Placas).md`
 (em `C:\Users\david\Downloads\`, fora deste repo) e comparei contra o
-backend real, endpoint por endpoint. Adicionei ao próprio documento as
-seções **14 (mapeamento de endpoints)** e **15 (divergências e decisões
-pendentes)** — é lá que está o detalhe completo. Resumo do que fica
-pendente até o front avançar:
+backend real, endpoint por endpoint. O documento tem as seções **14**
+(mapeamento de endpoints) e **15** (divergências e decisões) com o
+detalhe completo e já está atualizado com tudo abaixo — esta seção aqui
+é só o resumo do lado do backend.
 
-- **Resolvido nesta sessão:** CORS e `PedidoResponse` (ver acima).
-- **Decisão de produto pendente — Caixa:** a spec do front assume
-  abrir/fechar caixa com estado (`POST /caixa/fechar`, `/reabrir`,
-  ABERTO/FECHADO). O backend é um relatório sem estado
-  (`GET /financeiro/fechamento-caixa`), decisão já tomada. Recomendei
-  ajustar a spec do front pro modelo real em vez de reabrir a decisão —
-  ainda não confirmado com o usuário.
-- **Faltam ser construídos (sem ambiguidade, só escopo):** filtros de
-  listagem (`status`/`clienteId`/`de`/`ate` em `/pedidos`, `busca` em
-  `/clientes`, `placa` em `/veiculos`) + paginação, `PUT /clientes/{id}`,
-  `/clientes/{id}/veiculos`, `/clientes/{id}/pedidos`, `GET /pagamentos`
-  de nível superior (hoje só existe por pedido), módulo de Usuários
-  inteiro (nenhum `UsuarioController` existe ainda).
-- **Decisões de design pendentes:** refresh token (implementar ou
-  simplificar o front pra reautenticação completa ao expirar o JWT de
-  1h), `FormaPagamento` (front só tem 3 valores — PIX/CARTAO/DINHEIRO —
-  backend tem 5; se o front mandar `"CARTAO"` hoje o backend rejeita),
-  provedor de consulta veicular (nunca escolhido), se `ATENDENTE` pode
-  fazer movimentação manual de estoque (hoje só `ADMIN`/`GERENTE`),
-  campos de Veículo (front quer `marca`+`modelo` separados e um `ano`
-  único; backend tem `marcaModelo` combinado e `anoFabricacao`+
-  `anoModelo` separados — direção oposta nos dois campos).
-- `alteradoPor` no histórico de status do pedido é sempre a string fixa
-  `"sistema"` — a timeline do front nunca vai mostrar quem de fato mudou
-  o status até isso ser conectado ao usuário autenticado.
+**Decisões tomadas e já implementadas (2026-09-25):**
+- **Caixa fica sem estado**, definitivo — nada de abrir/fechar/ABERTO/
+  FECHADO. `GET /api/financeiro/fechamento-caixa?de=&ate=` é a única
+  fonte pra aba Caixa do front.
+- **`FormaPagamento` completado no front** para os 5 valores reais do
+  backend (`DINHEIRO`, `CARTAO_CREDITO`, `CARTAO_DEBITO`, `PIX`,
+  `BOLETO`) — o backend não foi reduzido.
+
+**Endpoints novos construídos nesta sessão** (todos testados via um
+teste de integração MockMvc descartável — login → CRUD de cliente com
+busca → veículo com filtros → pedido completo → filtros/paginação de
+pedido → pagamento → usuário — depois removido, não faz parte da
+suíte permanente):
+- `Cliente`: `GET /api/clientes?busca=` (nome/telefone/cpfCnpj, LIKE
+  case-insensitive no nome) e `PUT /api/clientes/{id}` (ainda recebe
+  `Cliente` cru, mesma dívida técnica de sempre).
+- `Veiculo`: `GET /api/veiculos?placa=&clienteId=` — o filtro
+  `clienteId` não estava pedido, mas substitui o que seria
+  `/clientes/{id}/veiculos`.
+- `Pedido`: `GET /api/pedidos?status=&clienteId=&de=&ate=&page=&size=`
+  via `@Query` JPQL com parâmetros opcionais + `Pageable`, retornando
+  `PagedModel<PedidoResponse>` (formato padrão do Spring Data:
+  `{content, page:{size,number,totalElements,totalPages}}`).
+- `Pagamento`: novo `PagamentoController` em `/api/pagamentos`
+  (`GET ?de=&ate=&forma=`, `ADMIN`/`GERENTE`) — lista todos os
+  pagamentos (não só por pedido), com `PagamentoListagemResponse` já
+  trazendo `placa`/`clienteNome`/`servicoNome` embutidos pra alimentar
+  a tabela da aba Pagamentos sem N+1.
+- **Usuário**: módulo inteiro novo (`UsuarioController`,
+  `UsuarioService`) — `GET/POST /api/usuarios`, `PUT /api/usuarios/{id}`,
+  `PATCH /api/usuarios/{id}/status` (`{ativo: boolean}`), `ADMIN` apenas.
+  Senha com BCrypt (reaproveita o `PasswordEncoder` já existente),
+  e-mail duplicado vira `400` (não constraint violation → `500`).
+  `UsuarioResponse` nunca expõe `senhaHash`. **Sem endpoint de reset de
+  senha** e **sem rastreamento de "último acesso"** — ficou fora de
+  escopo desta rodada.
+- `LoginResponse` agora inclui `nome` (além de `token`/`papel`) — o
+  front precisava disso pra sidebar e não tinha de onde tirar.
+
+**Ainda pendente — decisões de design não tomadas** (ver spec do front
+§15.4 pro detalhe): refresh token; provedor de consulta veicular
+(`ConsultaVeicularProvider` nunca foi implementado, nem escolhido o
+provedor); se `ATENDENTE` pode fazer movimentação manual de estoque;
+campos de Veículo (`marca`+`modelo` separados vs. `marcaModelo` único,
+`ano` único vs. `anoFabricacao`+`anoModelo`) e Cliente (`documento` vs.
+`cpfCnpj`); `sku`/`unidade` em `ItemEstoque` (não existem); `POST
+/pedidos` ainda recebe `Pedido` cru sem validação amigável (id inválido
+= erro 500 de FK, não 400); `alteradoPor` (histórico de pedido) e
+"registrado por" (pagamento) — nenhum dos dois tem usuário autenticado
+associado ainda, sempre aparece como `"sistema"` ou ausente.
 
 ## ⏳ Pendente (ordem de prioridade, seguindo a spec do backend)
 
-Fase 1 da spec do backend está com todos os módulos implementados. Resta:
+Fase 1 da spec do backend está com todos os módulos implementados.
+As decisões de alinhamento com o front que tinham prioridade (Caixa,
+FormaPagamento, endpoints faltantes) foram resolvidas nesta sessão.
+Resta:
 
 1. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
    estiver pronto, para já testar login de ponta a ponta no ambiente real.
    Também vale testar autorização por papel, a baixa automática de
    estoque, o fechamento de caixa e o dashboard end-to-end nesse momento
-   (nenhum desses foi testado via HTTP ainda, só compilação + contexto
-   Spring subindo, e agora CORS/Swagger prontos pra esse teste).
+   (só foi testado via teste de integração descartável até aqui, não
+   manualmente via HTTP com um usuário real).
 2. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
    conforme seção 7 da spec).
-3. **Decisões da spec do front** (ver seção acima) — bloqueiam o início
-   do desenvolvimento React até serem resolvidas, principalmente Caixa e
-   `FormaPagamento`.
+3. **Decisões de design ainda pendentes da spec do front** (ver seção
+   acima) — refresh token, consulta veicular, ATENDENTE+estoque, campos
+   de Veículo/Cliente, DTO de entrada de `POST /pedidos`.
 4. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.

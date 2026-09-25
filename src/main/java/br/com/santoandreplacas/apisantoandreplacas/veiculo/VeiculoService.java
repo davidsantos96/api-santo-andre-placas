@@ -14,8 +14,8 @@ public class VeiculoService {
         this.veiculoRepository = veiculoRepository;
     }
 
-    public List<Veiculo> listarTodos() {
-        return veiculoRepository.findAll();
+    public List<Veiculo> listar(String placa, Long clienteId) {
+        return veiculoRepository.buscar(placa, clienteId);
     }
 
     public Veiculo buscarPorId(Long id) {

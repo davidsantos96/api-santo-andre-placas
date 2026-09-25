@@ -18,8 +18,9 @@ public class VeiculoController {
     }
 
     @GetMapping
-    public List<VeiculoResponse> listar() {
-        return veiculoService.listarTodos().stream()
+    public List<VeiculoResponse> listar(@RequestParam(required = false) String placa,
+                                         @RequestParam(required = false) Long clienteId) {
+        return veiculoService.listar(placa, clienteId).stream()
                 .map(VeiculoResponse::fromEntity)
                 .collect(Collectors.toList());
     }

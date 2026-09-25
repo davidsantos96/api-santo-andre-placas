@@ -13,8 +13,8 @@ public class ClienteService {
         this.clienteRepository = clienteRepository;
     }
 
-    public List<Cliente> listarTodos() {
-        return clienteRepository.findAll();
+    public List<Cliente> listar(String busca) {
+        return clienteRepository.buscar(busca);
     }
 
     public Cliente buscarPorId(Long id) {
@@ -25,5 +25,14 @@ public class ClienteService {
     public Cliente criar(Cliente cliente) {
         cliente.setCriadoEm(LocalDateTime.now());
         return clienteRepository.save(cliente);
+    }
+
+    public Cliente atualizar(Long id, Cliente dadosAtualizados) {
+        Cliente existente = buscarPorId(id);
+        existente.setNome(dadosAtualizados.getNome());
+        existente.setTelefone(dadosAtualizados.getTelefone());
+        existente.setCpfCnpj(dadosAtualizados.getCpfCnpj());
+        existente.setEmail(dadosAtualizados.getEmail());
+        return clienteRepository.save(existente);
     }
 }

@@ -42,6 +42,24 @@ public class PagamentoService {
     }
 
     @Transactional(readOnly = true)
+    public List<Pagamento> listar(LocalDate de, LocalDate ate, FormaPagamento forma) {
+        if (ate.isBefore(de)) {
+            throw new IllegalArgumentException("A data final não pode ser anterior à data inicial.");
+        }
+
+        List<Pagamento> pagamentos = pagamentoRepository.findByStatusAndPagoEmBetween(
+                StatusPagamento.PAGO, de.atStartOfDay(), ate.plusDays(1).atStartOfDay());
+
+        if (forma == null) {
+            return pagamentos;
+        }
+
+        return pagamentos.stream()
+                .filter(pagamento -> pagamento.getFormaPagamento() == forma)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public FechamentoCaixaResponse fecharCaixa(LocalDate de, LocalDate ate) {
         if (ate.isBefore(de)) {
             throw new IllegalArgumentException("A data final não pode ser anterior à data inicial.");

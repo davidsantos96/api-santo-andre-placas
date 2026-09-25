@@ -17,8 +17,8 @@ public class ClienteController {
     }
 
     @GetMapping
-    public List<ClienteResponse> listar() {
-        return clienteService.listarTodos().stream()
+    public List<ClienteResponse> listar(@RequestParam(required = false) String busca) {
+        return clienteService.listar(busca).stream()
                 .map(ClienteResponse::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -31,5 +31,10 @@ public class ClienteController {
     @PostMapping
     public Cliente criar(@RequestBody Cliente cliente) {
         return clienteService.criar(cliente);
+    }
+
+    @PutMapping("/{id}")
+    public Cliente atualizar(@PathVariable Long id, @RequestBody Cliente cliente) {
+        return clienteService.atualizar(id, cliente);
     }
 }

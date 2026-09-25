@@ -31,6 +31,6 @@ public class AuthController {
 
         String token = jwtService.gerarToken(usuario.getEmail(), usuario.getPapel().name());
 
-        return new LoginResponse(token, usuario.getPapel().name());
+        return new LoginResponse(token, usuario.getPapel().name(), usuario.getNome());
     }
 }

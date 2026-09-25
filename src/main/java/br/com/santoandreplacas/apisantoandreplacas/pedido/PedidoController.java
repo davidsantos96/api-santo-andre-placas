@@ -3,8 +3,13 @@ package br.com.santoandreplacas.apisantoandreplacas.pedido;
 import br.com.santoandreplacas.apisantoandreplacas.financeiro.NovoPagamentoRequest;
 import br.com.santoandreplacas.apisantoandreplacas.financeiro.PagamentoResponse;
 import br.com.santoandreplacas.apisantoandreplacas.financeiro.PagamentoService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PagedModel;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,10 +34,22 @@ public class PedidoController {
     }
 
     @GetMapping
-    public List<PedidoResponse> listar() {
-        return pedidoService.listarTodos().stream()
-                .map(PedidoResponse::fromEntity)
-                .collect(Collectors.toList());
+    public PagedModel<PedidoResponse> listar(
+            @RequestParam(required = false) StatusPedido status,
+            @RequestParam(required = false) Long clienteId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate de,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+
+        Page<PedidoResponse> pagina = pedidoService
+                .listar(status, clienteId,
+                        de != null ? de.atStartOfDay() : null,
+                        ate != null ? ate.plusDays(1).atStartOfDay() : null,
+                        PageRequest.of(page, size))
+                .map(PedidoResponse::fromEntity);
+
+        return new PagedModel<>(pagina);
     }
 
     @GetMapping("/{id}")
