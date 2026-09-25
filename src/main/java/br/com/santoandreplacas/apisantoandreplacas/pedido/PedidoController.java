@@ -29,28 +29,30 @@ public class PedidoController {
     }
 
     @GetMapping
-    public List<Pedido> listar() {
-        return pedidoService.listarTodos();
+    public List<PedidoResponse> listar() {
+        return pedidoService.listarTodos().stream()
+                .map(PedidoResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public Pedido buscarPorId(@PathVariable Long id) {
-        return pedidoService.buscarPorId(id);
+    public PedidoResponse buscarPorId(@PathVariable Long id) {
+        return PedidoResponse.fromEntity(pedidoService.buscarPorId(id));
     }
 
     @PostMapping
-    public Pedido criar(@RequestBody Pedido pedido) {
-        return pedidoService.criar(pedido);
+    public PedidoResponse criar(@RequestBody Pedido pedido) {
+        return PedidoResponse.fromEntity(pedidoService.criar(pedido));
     }
 
     @PatchMapping("/{id}/status")
-    public Pedido mudarStatus(@PathVariable Long id, @RequestBody MudarStatusRequest request) {
-        return pedidoService.mudarStatus(id, request.novoStatus());
+    public PedidoResponse mudarStatus(@PathVariable Long id, @RequestBody MudarStatusRequest request) {
+        return PedidoResponse.fromEntity(pedidoService.mudarStatus(id, request.novoStatus()));
     }
 
     @PostMapping("/completo")
-    public Pedido criarCompleto(@RequestBody PedidoCompletoRequest request) {
-        return pedidoService.criarPedidoCompleto(request);
+    public PedidoResponse criarCompleto(@RequestBody PedidoCompletoRequest request) {
+        return PedidoResponse.fromEntity(pedidoService.criarPedidoCompleto(request));
     }
 
     @PostMapping("/{id}/pagamento")

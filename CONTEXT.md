@@ -119,23 +119,71 @@
   não `RECEBIDO`→`ENTREGUE` (que inclui tempo de espera do cliente, não de
   produção). Se a intenção real for outra janela, é só trocar os dois
   `StatusPedido` usados em `DashboardService.tempoMedioProducao`.
+- **CORS liberado** em `SecurityConfig` (`corsConfigurationSource`) para
+  `http://localhost:5173`/`127.0.0.1:5173` (Vite dev server). Ajustar
+  `allowedOrigins` quando o front for hospedado de verdade.
+- **`PedidoResponse` ligado ao `PedidoController`** — todos os endpoints que
+  devolvem pedido (`GET /pedidos`, `GET /pedidos/{id}`, `POST /pedidos`,
+  `PATCH /pedidos/{id}/status`, `POST /pedidos/completo`) agora retornam
+  `PedidoResponse` (cliente/veículo/serviço aninhados) em vez da entidade
+  `Pedido` crua. O record já existia no código mas não estava sendo usado
+  por nenhum controller até este ponto. `POST /pedidos` continua aceitando
+  `Pedido` cru no corpo da requisição (isso não mudou).
 
-## ⏳ Pendente (ordem de prioridade, seguindo a spec)
+## 🖥️ Front-end (React) — análise da spec
 
-Fase 1 da spec está com todos os módulos implementados. Resta:
+Recebi `Spec — Implementação React (Painel Santo André Placas).md`
+(em `C:\Users\david\Downloads\`, fora deste repo) e comparei contra o
+backend real, endpoint por endpoint. Adicionei ao próprio documento as
+seções **14 (mapeamento de endpoints)** e **15 (divergências e decisões
+pendentes)** — é lá que está o detalhe completo. Resumo do que fica
+pendente até o front avançar:
+
+- **Resolvido nesta sessão:** CORS e `PedidoResponse` (ver acima).
+- **Decisão de produto pendente — Caixa:** a spec do front assume
+  abrir/fechar caixa com estado (`POST /caixa/fechar`, `/reabrir`,
+  ABERTO/FECHADO). O backend é um relatório sem estado
+  (`GET /financeiro/fechamento-caixa`), decisão já tomada. Recomendei
+  ajustar a spec do front pro modelo real em vez de reabrir a decisão —
+  ainda não confirmado com o usuário.
+- **Faltam ser construídos (sem ambiguidade, só escopo):** filtros de
+  listagem (`status`/`clienteId`/`de`/`ate` em `/pedidos`, `busca` em
+  `/clientes`, `placa` em `/veiculos`) + paginação, `PUT /clientes/{id}`,
+  `/clientes/{id}/veiculos`, `/clientes/{id}/pedidos`, `GET /pagamentos`
+  de nível superior (hoje só existe por pedido), módulo de Usuários
+  inteiro (nenhum `UsuarioController` existe ainda).
+- **Decisões de design pendentes:** refresh token (implementar ou
+  simplificar o front pra reautenticação completa ao expirar o JWT de
+  1h), `FormaPagamento` (front só tem 3 valores — PIX/CARTAO/DINHEIRO —
+  backend tem 5; se o front mandar `"CARTAO"` hoje o backend rejeita),
+  provedor de consulta veicular (nunca escolhido), se `ATENDENTE` pode
+  fazer movimentação manual de estoque (hoje só `ADMIN`/`GERENTE`),
+  campos de Veículo (front quer `marca`+`modelo` separados e um `ano`
+  único; backend tem `marcaModelo` combinado e `anoFabricacao`+
+  `anoModelo` separados — direção oposta nos dois campos).
+- `alteradoPor` no histórico de status do pedido é sempre a string fixa
+  `"sistema"` — a timeline do front nunca vai mostrar quem de fato mudou
+  o status até isso ser conectado ao usuário autenticado.
+
+## ⏳ Pendente (ordem de prioridade, seguindo a spec do backend)
+
+Fase 1 da spec do backend está com todos os módulos implementados. Resta:
 
 1. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
    estiver pronto, para já testar login de ponta a ponta no ambiente real.
    Também vale testar autorização por papel, a baixa automática de
    estoque, o fechamento de caixa e o dashboard end-to-end nesse momento
    (nenhum desses foi testado via HTTP ainda, só compilação + contexto
-   Spring subindo).
+   Spring subindo, e agora CORS/Swagger prontos pra esse teste).
 2. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
    conforme seção 7 da spec).
-3. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
+3. **Decisões da spec do front** (ver seção acima) — bloqueiam o início
+   do desenvolvimento React até serem resolvidas, principalmente Caixa e
+   `FormaPagamento`.
+4. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.
-4. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
+5. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
    `Pedido` tem esse padrão; fechar essa lacuna nos outros três. Vale
    estender também a `ItemEstoque` e `ServicoItemEstoque`, que hoje também
    recebem a entidade JPA crua no `POST`.
