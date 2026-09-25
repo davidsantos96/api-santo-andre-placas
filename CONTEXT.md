@@ -93,21 +93,39 @@
     retornando total geral + total por forma de pagamento. Restrito a
     `ADMIN`/`GERENTE` (spec seção 8 só menciona financeiro básico para
     esses dois papéis).
+- **Dashboard e relatórios** (módulo 8, pacote `dashboard`, spec seção 5):
+  `GET /api/dashboard/resumo` (pedidos hoje, contagem por status, faturamento
+  de hoje, itens em baixo estoque), `GET /api/dashboard/faturamento?de=&ate=`
+  (total + série por dia, reaproveita `PagamentoRepository`),
+  `GET /api/dashboard/servicos-mais-vendidos` (ranking por quantidade de
+  pedidos; `faturamentoNominalCentavos` usa o **preço atual** do `Servico`,
+  não o preço no momento da venda — `Servico` não guarda histórico de preço),
+  `GET /api/dashboard/tempo-medio-producao`. Tudo restrito a `ADMIN`/
+  `GERENTE`, igual ao financeiro.
+  **Decisão de design (não estava na spec):** "tempo médio de produção" é
+  calculado como o intervalo entre o pedido entrar em `EM_PROCESSAMENTO` e
+  chegar a `PLACA_PRONTA` — usei a descrição dos próprios valores do enum
+  `StatusPedido` ("Em produção" / "Pronto para retirada") como critério,
+  não `RECEBIDO`→`ENTREGUE` (que inclui tempo de espera do cliente, não de
+  produção). Se a intenção real for outra janela, é só trocar os dois
+  `StatusPedido` usados em `DashboardService.tempoMedioProducao`.
 
 ## ⏳ Pendente (ordem de prioridade, seguindo a spec)
+
+Fase 1 da spec está com todos os módulos implementados. Resta:
 
 1. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
    estiver pronto, para já testar login de ponta a ponta no ambiente real.
    Também vale testar autorização por papel, a baixa automática de
-   estoque e o fechamento de caixa end-to-end nesse momento.
-2. **Dashboard e relatórios** (módulo 8) — provavelmente onde
-   `groupingBy`/streams mais avançados voltam a aparecer.
-3. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
-   conforme seção 7 da spec), testar autenticação de fato.
-4. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
+   estoque, o fechamento de caixa e o dashboard end-to-end nesse momento
+   (nenhum desses foi testado via HTTP ainda, só compilação + contexto
+   Spring subindo).
+2. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
+   conforme seção 7 da spec).
+3. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.
-5. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
+4. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
    `Pedido` tem esse padrão; fechar essa lacuna nos outros três. Vale
    estender também a `ItemEstoque` e `ServicoItemEstoque`, que hoje também
    recebem a entidade JPA crua no `POST`.

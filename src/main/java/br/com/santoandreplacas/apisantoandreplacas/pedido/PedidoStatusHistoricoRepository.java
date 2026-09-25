@@ -5,4 +5,5 @@ import java.util.List;
 
 public interface PedidoStatusHistoricoRepository extends JpaRepository<PedidoStatusHistorico, Long> {
     List<PedidoStatusHistorico> findByPedidoIdOrderByAlteradoEmAsc(Long pedidoId);
+    List<PedidoStatusHistorico> findByStatusNovoIn(List<StatusPedido> statusNovo);
 }
