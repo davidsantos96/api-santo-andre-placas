@@ -74,23 +74,40 @@
   (vira `400`) e a transação inteira do pedido é revertida — ainda não
   testado ponta a ponta via HTTP porque não há usuário seedado para gerar
   JWT (ver pendência 1).
+- **Financeiro básico** (módulo 7, pacote `financeiro`):
+  - `Pagamento` (pedido FK, valorCentavos, `FormaPagamento` [DINHEIRO,
+    CARTAO_CREDITO, CARTAO_DEBITO, PIX, BOLETO], `StatusPagamento` [PAGO,
+    CANCELADO — hoje só PAGO é usado, CANCELADO existe pro futuro mas sem
+    endpoint que o produza ainda], pagoEm). Endpoints (no
+    `PedidoController`, path aninhado como a spec pede):
+    `POST /api/pedidos/{id}/pagamento`, e um extra que não está na spec
+    mas segue o padrão de `/historico`: `GET /api/pedidos/{id}/pagamentos`.
+    Sempre grava como já pago (não existe fluxo de "pagamento pendente"
+    na Fase 1 — isso é coisa de `ContaReceber` na Fase 2).
+  - **Gap de spec preenchido:** "fechamento de caixa" está no nome do
+    módulo 7 (seção 1) mas não tem entidade nem endpoint definido em
+    nenhum outro lugar da spec. Perguntei e ficou decidido: **sem estado**
+    — nada de "abrir/fechar caixa", só um relatório que soma os
+    `Pagamento`s já registrados. Implementado como
+    `GET /api/financeiro/fechamento-caixa?de=&ate=` (default: hoje),
+    retornando total geral + total por forma de pagamento. Restrito a
+    `ADMIN`/`GERENTE` (spec seção 8 só menciona financeiro básico para
+    esses dois papéis).
 
 ## ⏳ Pendente (ordem de prioridade, seguindo a spec)
 
 1. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
    estiver pronto, para já testar login de ponta a ponta no ambiente real.
-   Também vale testar autorização por papel e a baixa automática de
-   estoque end-to-end nesse momento.
-2. **Financeiro básico** (módulo 7) — pagamento por pedido, fechamento de
-   caixa.
-3. **Dashboard e relatórios** (módulo 8) — provavelmente onde
+   Também vale testar autorização por papel, a baixa automática de
+   estoque e o fechamento de caixa end-to-end nesse momento.
+2. **Dashboard e relatórios** (módulo 8) — provavelmente onde
    `groupingBy`/streams mais avançados voltam a aparecer.
-4. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
+3. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
    conforme seção 7 da spec), testar autenticação de fato.
-5. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
+4. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.
-6. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
+5. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
    `Pedido` tem esse padrão; fechar essa lacuna nos outros três. Vale
    estender também a `ItemEstoque` e `ServicoItemEstoque`, que hoje também
    recebem a entidade JPA crua no `POST`.

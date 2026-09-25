@@ -1,5 +1,8 @@
 package br.com.santoandreplacas.apisantoandreplacas.pedido;
 
+import br.com.santoandreplacas.apisantoandreplacas.financeiro.NovoPagamentoRequest;
+import br.com.santoandreplacas.apisantoandreplacas.financeiro.PagamentoResponse;
+import br.com.santoandreplacas.apisantoandreplacas.financeiro.PagamentoService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -11,9 +14,11 @@ import java.util.stream.Collectors;
 public class PedidoController {
 
     private final PedidoService pedidoService;
+    private final PagamentoService pagamentoService;
 
-    public PedidoController(PedidoService pedidoService) {
+    public PedidoController(PedidoService pedidoService, PagamentoService pagamentoService) {
         this.pedidoService = pedidoService;
+        this.pagamentoService = pagamentoService;
     }
 
     @GetMapping("/{id}/historico")
@@ -46,5 +51,17 @@ public class PedidoController {
     @PostMapping("/completo")
     public Pedido criarCompleto(@RequestBody PedidoCompletoRequest request) {
         return pedidoService.criarPedidoCompleto(request);
+    }
+
+    @PostMapping("/{id}/pagamento")
+    public PagamentoResponse registrarPagamento(@PathVariable Long id, @RequestBody NovoPagamentoRequest request) {
+        return PagamentoResponse.fromEntity(pagamentoService.registrarPagamento(id, request));
+    }
+
+    @GetMapping("/{id}/pagamentos")
+    public List<PagamentoResponse> listarPagamentos(@PathVariable Long id) {
+        return pagamentoService.listarPorPedido(id).stream()
+                .map(PagamentoResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 }
