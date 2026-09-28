@@ -13,6 +13,7 @@ import br.com.santoandreplacas.apisantoandreplacas.veiculo.VeiculoRepository;
 import br.com.santoandreplacas.apisantoandreplacas.servico.Servico;
 import br.com.santoandreplacas.apisantoandreplacas.servico.ServicoRepository;
 import br.com.santoandreplacas.apisantoandreplacas.estoque.EstoqueService;
+import br.com.santoandreplacas.apisantoandreplacas.usuario.UsuarioAutenticadoProvider;
 
 @Service
 public class PedidoService {
@@ -23,19 +24,22 @@ public class PedidoService {
     private final ServicoRepository servicoRepository;
     private final PedidoStatusHistoricoRepository historicoRepository;
     private final EstoqueService estoqueService;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          ClienteRepository clienteRepository,
                          VeiculoRepository veiculoRepository,
                          ServicoRepository servicoRepository,
                          PedidoStatusHistoricoRepository historicoRepository,
-                         EstoqueService estoqueService) {
+                         EstoqueService estoqueService,
+                         UsuarioAutenticadoProvider usuarioAutenticadoProvider) {
         this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
         this.servicoRepository = servicoRepository;
         this.historicoRepository = historicoRepository;
         this.estoqueService = estoqueService;
+        this.usuarioAutenticadoProvider = usuarioAutenticadoProvider;
     }
 
     @Transactional(readOnly = true)
@@ -66,6 +70,23 @@ public class PedidoService {
         return pedidoSalvo;
     }
 
+    public Pedido criarSimples(NovoPedidoRequest request) {
+        Cliente cliente = clienteRepository.findById(request.clienteId())
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + request.clienteId()));
+        Veiculo veiculo = veiculoRepository.findById(request.veiculoId())
+                .orElseThrow(() -> new IllegalArgumentException("Veículo não encontrado: " + request.veiculoId()));
+        Servico servico = servicoRepository.findById(request.servicoId())
+                .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado: " + request.servicoId()));
+
+        Pedido pedido = new Pedido();
+        pedido.setCliente(cliente);
+        pedido.setVeiculo(veiculo);
+        pedido.setServico(servico);
+        pedido.setOrigem(request.origem());
+
+        return criar(pedido);
+    }
+
     @Transactional
     public Pedido mudarStatus(Long id, StatusPedido novoStatus) {
         Pedido pedido = buscarPorId(id);
@@ -90,7 +111,7 @@ public class PedidoService {
         historico.setPedido(pedido);
         historico.setStatusAnterior(statusAnterior);
         historico.setStatusNovo(statusNovo);
-        historico.setAlteradoPor("sistema"); // temporário, até termos autenticação
+        historico.setAlteradoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
         historico.setAlteradoEm(LocalDateTime.now());
         historicoRepository.save(historico);
     }

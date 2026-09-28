@@ -9,9 +9,11 @@ import java.util.List;
 public class VeiculoService {
 
     private final VeiculoRepository veiculoRepository;
+    private final ConsultaVeicularProvider consultaVeicularProvider;
 
-    public VeiculoService (VeiculoRepository veiculoRepository) {
+    public VeiculoService(VeiculoRepository veiculoRepository, ConsultaVeicularProvider consultaVeicularProvider) {
         this.veiculoRepository = veiculoRepository;
+        this.consultaVeicularProvider = consultaVeicularProvider;
     }
 
     public List<Veiculo> listar(String placa, Long clienteId) {
@@ -26,5 +28,10 @@ public class VeiculoService {
     public Veiculo criar(Veiculo veiculo) {
         veiculo.setCriadoEm(LocalDateTime.now());
         return veiculoRepository.save(veiculo);
+    }
+
+    public ConsultaVeicularResultado consultar(Long id) {
+        Veiculo veiculo = buscarPorId(id);
+        return consultaVeicularProvider.consultar(veiculo.getPlaca());
     }
 }

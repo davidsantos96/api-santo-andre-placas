@@ -2,6 +2,7 @@ package br.com.santoandreplacas.apisantoandreplacas.financeiro;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.Pedido;
 import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
+import br.com.santoandreplacas.apisantoandreplacas.usuario.UsuarioAutenticadoProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -16,10 +17,13 @@ public class PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
     private final PedidoRepository pedidoRepository;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
 
-    public PagamentoService(PagamentoRepository pagamentoRepository, PedidoRepository pedidoRepository) {
+    public PagamentoService(PagamentoRepository pagamentoRepository, PedidoRepository pedidoRepository,
+                            UsuarioAutenticadoProvider usuarioAutenticadoProvider) {
         this.pagamentoRepository = pagamentoRepository;
         this.pedidoRepository = pedidoRepository;
+        this.usuarioAutenticadoProvider = usuarioAutenticadoProvider;
     }
 
     public Pagamento registrarPagamento(Long pedidoId, NovoPagamentoRequest request) {
@@ -32,6 +36,7 @@ public class PagamentoService {
         pagamento.setFormaPagamento(request.formaPagamento());
         pagamento.setStatus(StatusPagamento.PAGO);
         pagamento.setPagoEm(LocalDateTime.now());
+        pagamento.setRegistradoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
 
         return pagamentoRepository.save(pagamento);
     }

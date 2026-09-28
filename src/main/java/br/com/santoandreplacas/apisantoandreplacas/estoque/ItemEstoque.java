@@ -15,6 +15,8 @@ public class ItemEstoque {
     private Long id;
 
     private String nome;
+    private String sku;
+    private String unidade;
     private int quantidade;
     private int quantidadeMinima;
 
@@ -31,6 +33,22 @@ public class ItemEstoque {
             throw new IllegalArgumentException("O nome do item de estoque não pode ser vazio");
         }
         this.nome = nome;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getUnidade() {
+        return unidade;
+    }
+
+    public void setUnidade(String unidade) {
+        this.unidade = unidade;
     }
 
     public int getQuantidade() {

@@ -14,7 +14,7 @@ public class JwtService {
             "chave-secreta-temporaria-para-estudo-trocar-depois-1234567890".getBytes()
     );
 
-    private final long expiracaoMs = 3600_000; // 1 hora
+    private final long expiracaoMs = 28_800_000; // 8 horas — cobre um turno de trabalho; sem refresh token (decisão registrada no CONTEXT.md)
 
     public String gerarToken(String email, String papel) {
         Date agora = new Date();

@@ -26,6 +26,8 @@ public class Pagamento {
 
     private LocalDateTime pagoEm;
 
+    private String registradoPor;
+
     public Long getId() {
         return id;
     }
@@ -77,5 +79,13 @@ public class Pagamento {
 
     public void setPagoEm(LocalDateTime pagoEm) {
         this.pagoEm = pagoEm;
+    }
+
+    public String getRegistradoPor() {
+        return registradoPor;
+    }
+
+    public void setRegistradoPor(String registradoPor) {
+        this.registradoPor = registradoPor;
     }
 }

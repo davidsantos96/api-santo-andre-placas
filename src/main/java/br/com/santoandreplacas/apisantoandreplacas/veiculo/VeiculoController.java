@@ -33,4 +33,15 @@ public class VeiculoController {
     public Veiculo criar(@RequestBody Veiculo veiculo) {
         return veiculoService.criar(veiculo);
     }
+
+    @PostMapping("/{id}/consultar")
+    public ConsultaVeicularResultado consultar(@PathVariable Long id) {
+        return veiculoService.consultar(id);
+    }
+
+    @GetMapping("/{id}/historico-consultas")
+    public List<Object> historicoConsultas(@PathVariable Long id) {
+        veiculoService.buscarPorId(id); // valida que o veículo existe
+        return List.of(); // nenhuma consulta é persistida enquanto não há provedor real (placeholder)
+    }
 }

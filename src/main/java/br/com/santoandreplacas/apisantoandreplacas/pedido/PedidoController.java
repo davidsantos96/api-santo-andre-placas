@@ -58,8 +58,8 @@ public class PedidoController {
     }
 
     @PostMapping
-    public PedidoResponse criar(@RequestBody Pedido pedido) {
-        return PedidoResponse.fromEntity(pedidoService.criar(pedido));
+    public PedidoResponse criar(@RequestBody NovoPedidoRequest request) {
+        return PedidoResponse.fromEntity(pedidoService.criarSimples(request));
     }
 
     @PatchMapping("/{id}/status")

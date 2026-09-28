@@ -178,43 +178,63 @@ suíte permanente):
 - `LoginResponse` agora inclui `nome` (além de `token`/`papel`) — o
   front precisava disso pra sidebar e não tinha de onde tirar.
 
-**Ainda pendente — decisões de design não tomadas** (ver spec do front
-§15.4 pro detalhe): refresh token; provedor de consulta veicular
-(`ConsultaVeicularProvider` nunca foi implementado, nem escolhido o
-provedor); se `ATENDENTE` pode fazer movimentação manual de estoque;
-campos de Veículo (`marca`+`modelo` separados vs. `marcaModelo` único,
-`ano` único vs. `anoFabricacao`+`anoModelo`) e Cliente (`documento` vs.
-`cpfCnpj`); `sku`/`unidade` em `ItemEstoque` (não existem); `POST
-/pedidos` ainda recebe `Pedido` cru sem validação amigável (id inválido
-= erro 500 de FK, não 400); `alteradoPor` (histórico de pedido) e
-"registrado por" (pagamento) — nenhum dos dois tem usuário autenticado
-associado ainda, sempre aparece como `"sistema"` ou ausente.
+**As 8 decisões de design pendentes foram todas resolvidas e implementadas
+em 2026-09-28** (testado via um segundo teste de integração MockMvc
+descartável, removido depois de confirmar):
+
+1. **Refresh token → não vai ter.** `JwtService.expiracaoMs` subiu de 1h
+   pra 8h. Sem `POST /auth/refresh`.
+2. **Consulta veicular → placeholder.** Nova interface
+   `ConsultaVeicularProvider` (pacote `veiculo`) + implementação
+   `ConsultaVeicularIndisponivelProvider` (sempre lança
+   `IllegalStateException` → `400`). Endpoints novos:
+   `POST /api/veiculos/{id}/consultar` e
+   `GET /api/veiculos/{id}/historico-consultas` (sempre `[]`).
+3. **Estoque — `ATENDENTE` liberado** para `POST /estoque/movimentacoes`
+   (tirei o `@PreAuthorize` extra do método, cai no da classe). Cadastro de
+   item e vínculo continuam `ADMIN`/`GERENTE`.
+4. **Veículo e Cliente — front se adapta**, sem mudança de campo no
+   backend (`marcaModelo`, `anoFabricacao`/`anoModelo`, `cpfCnpj`
+   continuam como estavam).
+5. **"Quem fez a ação" → implementado.** `UsuarioAutenticadoProvider`
+   (pacote `usuario`) resolve o usuário autenticado via
+   `SecurityContextHolder` + `UsuarioRepository`. `PedidoService` usa isso
+   em `alteradoPor` (antes hardcoded `"sistema"`). `Pagamento` ganhou o
+   campo `registradoPor`, preenchido por `PagamentoService` do mesmo jeito
+   — vale tanto pra `PagamentoResponse` quanto `PagamentoListagemResponse`.
+6. **`sku`/`unidade` adicionados a `ItemEstoque`** (`String`, opcionais).
+7. **`POST /api/pedidos` trocou de `Pedido` cru pra `NovoPedidoRequest{
+   clienteId, veiculoId, servicoId, origem }`** — `PedidoService.
+   criarSimples` valida existência dos três ids com `IllegalArgumentException`
+   (`400`), não mais erro de FK (`500`). `PedidoService.criar(Pedido)`
+   continua existindo internamente, reaproveitado por `criarSimples` e
+   por `criarPedidoCompleto`.
 
 ## ⏳ Pendente (ordem de prioridade, seguindo a spec do backend)
 
-Fase 1 da spec do backend está com todos os módulos implementados.
-As decisões de alinhamento com o front que tinham prioridade (Caixa,
-FormaPagamento, endpoints faltantes) foram resolvidas nesta sessão.
-Resta:
+Fase 1 da spec do backend está com todos os módulos implementados, e todas
+as decisões de alinhamento com o front (Caixa, FormaPagamento, endpoints
+faltantes, as 8 decisões de design) foram resolvidas. Resta:
 
 1. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
    estiver pronto, para já testar login de ponta a ponta no ambiente real.
    Também vale testar autorização por papel, a baixa automática de
    estoque, o fechamento de caixa e o dashboard end-to-end nesse momento
-   (só foi testado via teste de integração descartável até aqui, não
+   (só foi testado via testes de integração descartáveis até aqui, não
    manualmente via HTTP com um usuário real).
 2. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
    conforme seção 7 da spec).
-3. **Decisões de design ainda pendentes da spec do front** (ver seção
-   acima) — refresh token, consulta veicular, ATENDENTE+estoque, campos
-   de Veículo/Cliente, DTO de entrada de `POST /pedidos`.
-4. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
+3. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.
-5. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
+4. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
    `Pedido` tem esse padrão; fechar essa lacuna nos outros três. Vale
    estender também a `ItemEstoque` e `ServicoItemEstoque`, que hoje também
    recebem a entidade JPA crua no `POST`.
+5. **Itens de menor prioridade que sobraram da spec do front** (§15.4 do
+   documento, parágrafo final): filtro `pago=false` em `/pedidos`
+   (destrava o bloco de pendências da aba Caixa), endpoint de reset de
+   senha de usuário, tendência/variação no `TempoMedioProducao`.
 
 ## Fundamentos de Java já estudados
 

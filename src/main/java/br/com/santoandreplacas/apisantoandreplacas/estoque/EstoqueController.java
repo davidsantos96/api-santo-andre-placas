@@ -37,7 +37,6 @@ public class EstoqueController {
     }
 
     @PostMapping("/movimentacoes")
-    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     public MovimentacaoEstoqueResponse registrarMovimentacao(@RequestBody NovaMovimentacaoRequest request) {
         return MovimentacaoEstoqueResponse.fromEntity(estoqueService.registrarMovimentacao(request));
     }
