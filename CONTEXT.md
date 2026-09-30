@@ -212,6 +212,55 @@ descartável, removido depois de confirmar):
    continua existindo internamente, reaproveitado por `criarSimples` e
    por `criarPedidoCompleto`.
 
+## ✅ Bugs encontrados testando com o front — 2026-09-30
+
+Testado via um terceiro teste de integração MockMvc descartável (removido
+depois de confirmar, 6 cenários, todos verdes):
+
+1. **Login não checava `ativo`** — usuário desativado conseguia logar e o
+   token continuava valendo pelo resto da expiração. Dois pontos
+   corrigidos: `AuthController.login` agora rejeita (`400`, "Usuário
+   inativo. Contate um administrador.") se `usuario.isAtivo() == false`;
+   e `CustomUserDetailsService` agora propaga `ativo` pro `enabled` do
+   `UserDetails`, então `JwtAuthFilter` **não autentica mais** um token
+   cujo usuário foi desativado depois de emitido (mesmo com assinatura e
+   expiração válidas) — a requisição cai como anônima e é rejeitada como
+   `401` mais adiante.
+2. **401 vs 403** — sem `formLogin()`/`httpBasic()` configurado, o Spring
+   Security usa o `Http403ForbiddenEntryPoint` por padrão pra qualquer
+   requisição sem autenticação válida. Adicionado um
+   `authenticationEntryPoint` customizado em `SecurityConfig` que devolve
+   `401` com `{"mensagem": "..."}` — cobre token ausente, inválido,
+   expirado ou de usuário desativado.
+3. **Serviço sem ativar/desativar de verdade** — `DELETE /api/servicos/{id}`
+   apagava a linha (podia falhar/quebrar FK se o serviço já tivesse
+   pedidos). Virou soft-delete (`ativo=false`) dentro do próprio
+   `ServicoService.deletar`. Novo `PATCH /api/servicos/{id}/status`
+   (`{ativo: boolean}`, mesmo padrão do `Usuario`) pra reativar.
+4. **Sem `pago` no pedido** — `PedidoResponse` ganhou o campo `pago`
+   (boolean), calculado em `PedidoService.estaPago` como
+   `SUM(pagamento.valorCentavos WHERE status=PAGO) >= servico.precoCentavos`
+   (nova query `PagamentoRepository.somarValorPorPedidoEStatus`). Permite
+   pagamento parcial em várias parcelas; só fica `pago=true` quando a
+   soma bate ou passa o preço do serviço. Todos os pontos que devolvem
+   `PedidoResponse` passaram a usar `PedidoService.toResponse(pedido)`.
+5. **Erros de validação de entidade virando "Bad Request" sem mensagem** —
+   causa raiz: as entidades validam nos próprios setters (ex.:
+   `Servico.setNome`), chamados pelo Jackson durante a desserialização do
+   corpo da requisição; quando o setter lança, o Spring embrulha em
+   `HttpMessageNotReadableException` **antes** de chegar nos handlers de
+   `IllegalArgumentException`/`IllegalStateException` do
+   `GlobalExceptionHandler` — a mensagem real se perdia. Novo handler pra
+   `HttpMessageNotReadableException` que abre a causa mais específica e
+   devolve a mensagem original se for uma dessas duas exceções.
+6. **`POST /veiculos` inconsistente** — esperava `{cliente: {id}}` (entidade
+   JPA crua) em vez de `clienteId` como o resto da API, e devolvia a
+   entidade em vez de `VeiculoResponse`. Novo
+   `br...veiculo.NovoVeiculoRequest` (flat, com `clienteId`) — mesmo
+   padrão do `NovoPedidoRequest`. `VeiculoService.criar` agora resolve o
+   `Cliente` via `ClienteRepository` e o controller devolve
+   `VeiculoResponse.fromEntity(...)`.
+
 ## ✅ Supabase (Postgres real) conectado e seed do admin — 2026-09-30
 
 - Projeto Supabase criado (`db.ksmxrzmayzahlyebbdaq.supabase.co`), só para
@@ -252,10 +301,11 @@ end. Resta:
 3. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.
-4. **DTOs de entrada** para `Cliente`, `Veiculo`, `Servico` — hoje só
-   `Pedido` tem esse padrão; fechar essa lacuna nos outros três. Vale
-   estender também a `ItemEstoque` e `ServicoItemEstoque`, que hoje também
-   recebem a entidade JPA crua no `POST`.
+4. **DTOs de entrada** para `Cliente` e `Servico` (`Veiculo` já resolvido em
+   2026-09-30 — ver seção de bugs acima) — hoje só `Pedido`/`Veiculo` têm
+   esse padrão; fechar essa lacuna nos outros dois. Vale estender também a
+   `ItemEstoque` e `ServicoItemEstoque`, que hoje também recebem a entidade
+   JPA crua no `POST`.
 5. **Itens de menor prioridade que sobraram da spec do front** (§15.4 do
    documento, parágrafo final): filtro `pago=false` em `/pedidos`
    (destrava o bloco de pendências da aba Caixa), endpoint de reset de

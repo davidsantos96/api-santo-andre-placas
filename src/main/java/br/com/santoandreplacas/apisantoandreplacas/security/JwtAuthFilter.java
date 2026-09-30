@@ -40,10 +40,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String email = jwtService.extrairEmail(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            // Se o usuário foi desativado depois que o token foi emitido, não
+            // autentica — o token em si continua "válido" (assinatura/expiração
+            // OK), mas o acesso não deve mais ser concedido. Cai como requisição
+            // anônima e é rejeitada mais adiante como 401 pelo authenticationEntryPoint.
+            if (userDetails.isEnabled()) {
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);

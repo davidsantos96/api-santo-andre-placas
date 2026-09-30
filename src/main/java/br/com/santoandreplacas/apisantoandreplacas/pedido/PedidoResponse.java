@@ -9,17 +9,19 @@ public record PedidoResponse(
         Long id,
         StatusPedido status,
         String origem,
+        boolean pago,
         ClienteResponse cliente,
         VeiculoResponse veiculo,
         ServicoResponse servico,
         LocalDateTime criadoEm,
         LocalDateTime atualizadoEm
 ) {
-    public static PedidoResponse fromEntity(Pedido pedido) {
+    public static PedidoResponse fromEntity(Pedido pedido, boolean pago) {
         return new PedidoResponse(
                 pedido.getId(),
                 pedido.getStatus(),
                 pedido.getOrigem(),
+                pago,
                 ClienteResponse.fromEntity(pedido.getCliente()),
                 VeiculoResponse.fromEntity(pedido.getVeiculo()),
                 ServicoResponse.fromEntity(pedido.getServico()),

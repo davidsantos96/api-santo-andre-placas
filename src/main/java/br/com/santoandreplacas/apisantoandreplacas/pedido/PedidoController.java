@@ -47,29 +47,29 @@ public class PedidoController {
                         de != null ? de.atStartOfDay() : null,
                         ate != null ? ate.plusDays(1).atStartOfDay() : null,
                         PageRequest.of(page, size))
-                .map(PedidoResponse::fromEntity);
+                .map(pedidoService::toResponse);
 
         return new PagedModel<>(pagina);
     }
 
     @GetMapping("/{id}")
     public PedidoResponse buscarPorId(@PathVariable Long id) {
-        return PedidoResponse.fromEntity(pedidoService.buscarPorId(id));
+        return pedidoService.toResponse(pedidoService.buscarPorId(id));
     }
 
     @PostMapping
     public PedidoResponse criar(@RequestBody NovoPedidoRequest request) {
-        return PedidoResponse.fromEntity(pedidoService.criarSimples(request));
+        return pedidoService.toResponse(pedidoService.criarSimples(request));
     }
 
     @PatchMapping("/{id}/status")
     public PedidoResponse mudarStatus(@PathVariable Long id, @RequestBody MudarStatusRequest request) {
-        return PedidoResponse.fromEntity(pedidoService.mudarStatus(id, request.novoStatus()));
+        return pedidoService.toResponse(pedidoService.mudarStatus(id, request.novoStatus()));
     }
 
     @PostMapping("/completo")
     public PedidoResponse criarCompleto(@RequestBody PedidoCompletoRequest request) {
-        return PedidoResponse.fromEntity(pedidoService.criarPedidoCompleto(request));
+        return pedidoService.toResponse(pedidoService.criarPedidoCompleto(request));
     }
 
     @PostMapping("/{id}/pagamento")

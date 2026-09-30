@@ -29,6 +29,10 @@ public class AuthController {
             throw new IllegalArgumentException("Email ou senha inválidos");
         }
 
+        if (!usuario.isAtivo()) {
+            throw new IllegalArgumentException("Usuário inativo. Contate um administrador.");
+        }
+
         String token = jwtService.gerarToken(usuario.getEmail(), usuario.getPapel().name());
 
         return new LoginResponse(token, usuario.getPapel().name(), usuario.getNome());

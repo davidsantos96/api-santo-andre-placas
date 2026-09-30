@@ -35,8 +35,16 @@ public class ServicoService {
         return servicoRepository.save(existente);
     }
 
-    public void deletar(Long id) {
+    public Servico atualizarStatus(Long id, boolean ativo) {
         Servico existente = buscarPorId(id);
-        servicoRepository.delete(existente);
+        existente.setAtivo(ativo);
+        return servicoRepository.save(existente);
+    }
+
+    public void deletar(Long id) {
+        // "excluir" um serviço na prática é desativar: ele pode estar referenciado
+        // por pedidos já feitos (FK servico_id em pedido), então apagar a linha de
+        // verdade quebraria o histórico. Ver AtualizarStatusServicoRequest.
+        atualizarStatus(id, false);
     }
 }

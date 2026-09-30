@@ -14,6 +14,8 @@ import br.com.santoandreplacas.apisantoandreplacas.servico.Servico;
 import br.com.santoandreplacas.apisantoandreplacas.servico.ServicoRepository;
 import br.com.santoandreplacas.apisantoandreplacas.estoque.EstoqueService;
 import br.com.santoandreplacas.apisantoandreplacas.usuario.UsuarioAutenticadoProvider;
+import br.com.santoandreplacas.apisantoandreplacas.financeiro.PagamentoRepository;
+import br.com.santoandreplacas.apisantoandreplacas.financeiro.StatusPagamento;
 
 @Service
 public class PedidoService {
@@ -25,6 +27,7 @@ public class PedidoService {
     private final PedidoStatusHistoricoRepository historicoRepository;
     private final EstoqueService estoqueService;
     private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
+    private final PagamentoRepository pagamentoRepository;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          ClienteRepository clienteRepository,
@@ -32,7 +35,8 @@ public class PedidoService {
                          ServicoRepository servicoRepository,
                          PedidoStatusHistoricoRepository historicoRepository,
                          EstoqueService estoqueService,
-                         UsuarioAutenticadoProvider usuarioAutenticadoProvider) {
+                         UsuarioAutenticadoProvider usuarioAutenticadoProvider,
+                         PagamentoRepository pagamentoRepository) {
         this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
@@ -40,6 +44,18 @@ public class PedidoService {
         this.historicoRepository = historicoRepository;
         this.estoqueService = estoqueService;
         this.usuarioAutenticadoProvider = usuarioAutenticadoProvider;
+        this.pagamentoRepository = pagamentoRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean estaPago(Pedido pedido) {
+        long totalPago = pagamentoRepository.somarValorPorPedidoEStatus(pedido.getId(), StatusPagamento.PAGO);
+        return totalPago >= pedido.getServico().getPrecoCentavos();
+    }
+
+    @Transactional(readOnly = true)
+    public PedidoResponse toResponse(Pedido pedido) {
+        return PedidoResponse.fromEntity(pedido, estaPago(pedido));
     }
 
     @Transactional(readOnly = true)

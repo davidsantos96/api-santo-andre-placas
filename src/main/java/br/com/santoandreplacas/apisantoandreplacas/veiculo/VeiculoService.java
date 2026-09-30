@@ -1,6 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.veiculo;
 
 import br.com.santoandreplacas.apisantoandreplacas.cliente.Cliente;
+import br.com.santoandreplacas.apisantoandreplacas.cliente.ClienteRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,10 +10,14 @@ import java.util.List;
 public class VeiculoService {
 
     private final VeiculoRepository veiculoRepository;
+    private final ClienteRepository clienteRepository;
     private final ConsultaVeicularProvider consultaVeicularProvider;
 
-    public VeiculoService(VeiculoRepository veiculoRepository, ConsultaVeicularProvider consultaVeicularProvider) {
+    public VeiculoService(VeiculoRepository veiculoRepository,
+                          ClienteRepository clienteRepository,
+                          ConsultaVeicularProvider consultaVeicularProvider) {
         this.veiculoRepository = veiculoRepository;
+        this.clienteRepository = clienteRepository;
         this.consultaVeicularProvider = consultaVeicularProvider;
     }
 
@@ -25,8 +30,19 @@ public class VeiculoService {
                 .orElseThrow(() -> new IllegalArgumentException("Veiculo não encontrado: " + id));
     }
 
-    public Veiculo criar(Veiculo veiculo) {
+    public Veiculo criar(NovoVeiculoRequest request) {
+        Cliente cliente = clienteRepository.findById(request.clienteId())
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + request.clienteId()));
+
+        Veiculo veiculo = new Veiculo();
+        veiculo.setCliente(cliente);
+        veiculo.setPlaca(request.placa());
+        veiculo.setMarcaModelo(request.marcaModelo());
+        veiculo.setAnoFabricacao(request.anoFabricacao());
+        veiculo.setAnoModelo(request.anoModelo());
+        veiculo.setChassi(request.chassi());
         veiculo.setCriadoEm(LocalDateTime.now());
+
         return veiculoRepository.save(veiculo);
     }
 

@@ -44,4 +44,10 @@ public class ServicoController {
     public void deletar(@PathVariable Long id) {
         servicoService.deletar(id);
     }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
+    public Servico atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusServicoRequest request) {
+        return servicoService.atualizarStatus(id, request.ativo());
+    }
 }

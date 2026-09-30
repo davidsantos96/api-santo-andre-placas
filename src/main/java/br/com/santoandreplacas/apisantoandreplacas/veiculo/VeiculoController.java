@@ -30,8 +30,8 @@ public class VeiculoController {
     }
 
     @PostMapping
-    public Veiculo criar(@RequestBody Veiculo veiculo) {
-        return veiculoService.criar(veiculo);
+    public VeiculoResponse criar(@RequestBody NovoVeiculoRequest request) {
+        return VeiculoResponse.fromEntity(veiculoService.criar(request));
     }
 
     @PostMapping("/{id}/consultar")
