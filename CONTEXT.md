@@ -174,9 +174,10 @@ suíte permanente):
   `PATCH /api/usuarios/{id}/status` (`{ativo: boolean}`), `ADMIN` apenas.
   Senha com BCrypt (reaproveita o `PasswordEncoder` já existente),
   e-mail duplicado vira `400` (não constraint violation → `500`).
-  `UsuarioResponse` nunca expõe `senhaHash`. **Sem endpoint de reset de
-  senha** e **sem rastreamento de "último acesso"** — ficou fora de
-  escopo desta rodada.
+  `UsuarioResponse` nunca expõe `senhaHash`. **Sem rastreamento de
+  "último acesso"** — ficou fora de escopo desta rodada. Reset de senha
+  pelo admin foi implementado depois, em 2026-09-30 (ver seção abaixo) —
+  reset pelo próprio usuário (self-service) ainda não.
 - `LoginResponse` agora inclui `nome` (além de `token`/`papel`) — o
   front precisava disso pra sidebar e não tinha de onde tirar.
 
@@ -211,6 +212,21 @@ descartável, removido depois de confirmar):
    (`400`), não mais erro de FK (`500`). `PedidoService.criar(Pedido)`
    continua existindo internamente, reaproveitado por `criarSimples` e
    por `criarPedidoCompleto`.
+
+## ✅ Reset de senha pelo admin — 2026-09-30
+
+Decisão: por enquanto só o admin reseta a senha de qualquer usuário
+(`PATCH /api/usuarios/{id}/senha`, `{novaSenha: string}`, `ADMIN` apenas —
+herda o `@PreAuthorize` de classe do `UsuarioController`). Fluxo real:
+admin define uma senha nova e passa pro usuário por fora do sistema (não
+há envio de e-mail configurado no projeto). Self-service (o próprio
+usuário trocar a própria senha logado, informando a senha atual) **ainda
+não foi implementado** — ficou como próximo passo natural caso apareça
+essa necessidade.
+
+Testado via MockMvc descartável: admin cria usuário, senha antiga
+funciona, admin reseta, senha antiga passa a falhar (`400`), senha nova
+funciona, e um não-admin tentando chamar o endpoint recebe `403`.
 
 ## ✅ Bugs encontrados testando com o front — 2026-09-30
 
@@ -307,9 +323,11 @@ end. Resta:
    `ItemEstoque` e `ServicoItemEstoque`, que hoje também recebem a entidade
    JPA crua no `POST`.
 5. **Itens de menor prioridade que sobraram da spec do front** (§15.4 do
-   documento, parágrafo final): filtro `pago=false` em `/pedidos`
-   (destrava o bloco de pendências da aba Caixa), endpoint de reset de
-   senha de usuário, tendência/variação no `TempoMedioProducao`.
+   documento, parágrafo final): filtro `pago=false` em `/pedidos` (o campo
+   `pago` já existe na resposta desde 2026-09-30, falta o filtro por
+   query param), tendência/variação no `TempoMedioProducao`. Reset de
+   senha pelo admin já foi feito (ver seção acima); self-service (usuário
+   troca a própria senha) continua de fora.
 
 ## Fundamentos de Java já estudados
 

@@ -37,4 +37,9 @@ public class UsuarioController {
     public UsuarioResponse atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusUsuarioRequest request) {
         return UsuarioResponse.fromEntity(usuarioService.atualizarStatus(id, request.ativo()));
     }
+
+    @PatchMapping("/{id}/senha")
+    public UsuarioResponse redefinirSenha(@PathVariable Long id, @RequestBody RedefinirSenhaRequest request) {
+        return UsuarioResponse.fromEntity(usuarioService.redefinirSenha(id, request.novaSenha()));
+    }
 }

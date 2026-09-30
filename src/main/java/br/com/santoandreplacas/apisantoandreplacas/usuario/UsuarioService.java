@@ -60,4 +60,14 @@ public class UsuarioService {
         usuario.setAtivo(ativo);
         return usuarioRepository.save(usuario);
     }
+
+    public Usuario redefinirSenha(Long id, String novaSenha) {
+        if (novaSenha == null || novaSenha.isBlank()) {
+            throw new IllegalArgumentException("Informe a nova senha.");
+        }
+
+        Usuario usuario = buscarPorId(id);
+        usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+        return usuarioRepository.save(usuario);
+    }
 }
