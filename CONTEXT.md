@@ -7,12 +7,14 @@
 
 ## Stack e estado atual
 
-- Spring Boot (Maven), H2 em arquivo — troca para PostgreSQL planejada, ainda
-  não feita.
+- Spring Boot (Maven), H2 em memória por padrão (dev/testes). PostgreSQL real
+  disponível via profile `supabase` (ver seção abaixo) — Flyway ainda
+  pendente.
 - Repositório Git criado e sincronizado no GitHub.
 - Autenticação JWT funcionando: entidade `Usuario`, senha com hash BCrypt,
   geração/validação de token, filtro de segurança protegendo todas as rotas
-  exceto `/api/auth/**`. Ainda **sem seed de usuário** (ver pendências).
+  exceto `/api/auth/**`. **Seed do admin implementado** (`AdminUsuarioSeeder`,
+  ver seção "Supabase" abaixo).
 - **Swagger UI** (`springdoc-openapi-starter-webmvc-ui` 3.1.1, compatível com
   Spring Boot 4): `http://localhost:8080/swagger-ui/index.html`. Rotas
   `/swagger-ui/**` e `/v3/api-docs/**` liberadas em `SecurityConfig`. Botão
@@ -210,20 +212,43 @@ descartável, removido depois de confirmar):
    continua existindo internamente, reaproveitado por `criarSimples` e
    por `criarPedidoCompleto`.
 
+## ✅ Supabase (Postgres real) conectado e seed do admin — 2026-09-30
+
+- Projeto Supabase criado (`db.ksmxrzmayzahlyebbdaq.supabase.co`), só para
+  testes — nenhum usuário/dado de produção ainda.
+- Novo profile Spring `supabase` (`application-supabase.properties`):
+  datasource Postgres via `${SUPABASE_DB_HOST}`/`${SUPABASE_DB_PASSWORD}`
+  (variáveis de ambiente, nunca hardcoded/commitado). `ddl-auto=update`
+  criou as 11 tabelas na primeira subida. Ativar com
+  `-Dspring-boot.run.profiles=supabase`. Sem o profile, continua H2 como
+  sempre (dev/testes automatizados não mudam).
+- Driver `org.postgresql:postgresql` adicionado ao `pom.xml`.
+- **`AdminUsuarioSeeder`** (pacote `usuario`, `ApplicationRunner`): na
+  subida, cria o usuário `ADMIN` se `app.seed.admin.email` ainda não
+  existir (idempotente — testado reiniciando duas vezes contra o Supabase
+  real, só insere na primeira). Credenciais configuráveis via
+  `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD`/`ADMIN_SEED_NOME`, com defaults
+  (`admin@santoandreplacas.com.br` / `admin123` / `Administrador`) em
+  `application.properties` — valem tanto pro H2 quanto pro Supabase.
+- Testado ponta a ponta contra o banco real: subiu a app, o seeder
+  inseriu o admin, `POST /api/auth/login` com essas credenciais devolveu
+  token JWT válido com `papel: ADMIN`.
+
 ## ⏳ Pendente (ordem de prioridade, seguindo a spec do backend)
 
-Fase 1 da spec do backend está com todos os módulos implementados, e todas
-as decisões de alinhamento com o front (Caixa, FormaPagamento, endpoints
-faltantes, as 8 decisões de design) foram resolvidas. Resta:
+Fase 1 da spec do backend está com todos os módulos implementados, todas
+as decisões de alinhamento com o front foram resolvidas, e agora já existe
+um ambiente Postgres real (Supabase) com usuário admin pra testar end to
+end. Resta:
 
-1. **Seed do primeiro usuário** — combinado deixar para quando o PostgreSQL
-   estiver pronto, para já testar login de ponta a ponta no ambiente real.
-   Também vale testar autorização por papel, a baixa automática de
-   estoque, o fechamento de caixa e o dashboard end-to-end nesse momento
-   (só foi testado via testes de integração descartáveis até aqui, não
-   manualmente via HTTP com um usuário real).
-2. **PostgreSQL real** — migrar do H2 (Flyway para migrations versionadas,
-   conforme seção 7 da spec).
+1. **Migrations versionadas (Flyway)** — hoje o schema no Supabase foi
+   criado via `ddl-auto=update` (Hibernate), só pra destravar os testes.
+   Trocar por Flyway antes de depender desse banco pra valer (conforme
+   seção 7 da spec).
+2. **Testar manualmente end-to-end via HTTP** com o admin seedado:
+   autorização por papel, baixa automática de estoque, fechamento de
+   caixa e dashboard — só foi testado via testes de integração
+   descartáveis até aqui.
 3. **Fase 2 — Financeiro avançado** (contas a receber/pagar, balanço,
    comparativos, metas — seção 6 da spec). Só começar depois da Fase 1
    completa.
