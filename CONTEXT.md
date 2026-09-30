@@ -213,6 +213,16 @@ descartável, removido depois de confirmar):
    continua existindo internamente, reaproveitado por `criarSimples` e
    por `criarPedidoCompleto`.
 
+## ✅ Chassi do veículo passou a ser opcional — 2026-09-30
+
+`Veiculo.setChassi` validava e lançava `IllegalArgumentException` se
+vazio/nulo (400 pro front, inclusive no `POST /pedidos/completo`, onde o
+veículo é criado inline). Removida a validação — no balcão nem sempre dá
+pra conferir o chassi na hora, só a placa. Coluna já era `nullable=true`
+no banco (sem `@Column(nullable=false)` na entidade), então não precisou
+de migração. Testado criando veículo sem `chassi` no corpo — `200`, campo
+volta `null` na resposta.
+
 ## ✅ Reset de senha pelo admin — 2026-09-30
 
 Decisão: por enquanto só o admin reseta a senha de qualquer usuário

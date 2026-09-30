@@ -93,9 +93,6 @@ public class Veiculo {
     }
 
     public void setChassi(String chassi) {
-        if (chassi == null || chassi.isBlank()) {
-            throw new IllegalArgumentException("o chassi nao pode ser vazio");
-        }
         this.chassi = chassi;
     }
 
