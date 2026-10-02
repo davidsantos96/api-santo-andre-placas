@@ -8,8 +8,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import br.com.santoandreplacas.apisantoandreplacas.cliente.Cliente;
 import br.com.santoandreplacas.apisantoandreplacas.cliente.ClienteRepository;
+import br.com.santoandreplacas.apisantoandreplacas.cliente.ClienteService;
 import br.com.santoandreplacas.apisantoandreplacas.veiculo.Veiculo;
 import br.com.santoandreplacas.apisantoandreplacas.veiculo.VeiculoRepository;
+import br.com.santoandreplacas.apisantoandreplacas.veiculo.VeiculoService;
 import br.com.santoandreplacas.apisantoandreplacas.servico.Servico;
 import br.com.santoandreplacas.apisantoandreplacas.servico.ServicoRepository;
 import br.com.santoandreplacas.apisantoandreplacas.estoque.EstoqueService;
@@ -28,6 +30,8 @@ public class PedidoService {
     private final EstoqueService estoqueService;
     private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
     private final PagamentoRepository pagamentoRepository;
+    private final ClienteService clienteService;
+    private final VeiculoService veiculoService;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          ClienteRepository clienteRepository,
@@ -36,7 +40,9 @@ public class PedidoService {
                          PedidoStatusHistoricoRepository historicoRepository,
                          EstoqueService estoqueService,
                          UsuarioAutenticadoProvider usuarioAutenticadoProvider,
-                         PagamentoRepository pagamentoRepository) {
+                         PagamentoRepository pagamentoRepository,
+                         ClienteService clienteService,
+                         VeiculoService veiculoService) {
         this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.veiculoRepository = veiculoRepository;
@@ -45,6 +51,8 @@ public class PedidoService {
         this.estoqueService = estoqueService;
         this.usuarioAutenticadoProvider = usuarioAutenticadoProvider;
         this.pagamentoRepository = pagamentoRepository;
+        this.clienteService = clienteService;
+        this.veiculoService = veiculoService;
     }
 
     @Transactional(readOnly = true)
@@ -167,6 +175,8 @@ public class PedidoService {
             throw new IllegalArgumentException("Informe clienteId ou os dados de um novo cliente.");
         }
 
+        clienteService.validarCpfCnpjUnico(dados.cpfCnpj(), null);
+
         Cliente novoCliente = new Cliente();
         novoCliente.setNome(dados.nome());
         novoCliente.setTelefone(dados.telefone());
@@ -178,6 +188,8 @@ public class PedidoService {
     }
 
     private Veiculo criarVeiculo(NovoVeiculoRequest dados, Cliente cliente) {
+        veiculoService.validarPlacaUnica(dados.placa(), null);
+
         Veiculo veiculo = new Veiculo();
         veiculo.setCliente(cliente);
         veiculo.setPlaca(dados.placa());

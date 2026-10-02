@@ -53,7 +53,7 @@ public class Veiculo {
         if (placa == null || placa.isBlank()) {
             throw new IllegalArgumentException("Digite a placa do veiculo");
         }
-        this.placa = placa;
+        this.placa = placa.trim().toUpperCase();
     }
 
     public String getMarcaModelo() {

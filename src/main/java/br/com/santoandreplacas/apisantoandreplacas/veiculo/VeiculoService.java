@@ -30,7 +30,19 @@ public class VeiculoService {
                 .orElseThrow(() -> new IllegalArgumentException("Veiculo não encontrado: " + id));
     }
 
+    public void validarPlacaUnica(String placa, Long idIgnorado) {
+        if (placa == null || placa.isBlank()) {
+            return;
+        }
+        boolean duplicada = veiculoRepository.findByPlacaIgnoreCase(placa.trim()).stream()
+                .anyMatch(outro -> !outro.getId().equals(idIgnorado));
+        if (duplicada) {
+            throw new IllegalArgumentException("Já existe um veículo cadastrado com a placa " + placa.trim().toUpperCase() + ".");
+        }
+    }
+
     public Veiculo criar(NovoVeiculoRequest request) {
+        validarPlacaUnica(request.placa(), null);
         Cliente cliente = clienteRepository.findById(request.clienteId())
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + request.clienteId()));
 
