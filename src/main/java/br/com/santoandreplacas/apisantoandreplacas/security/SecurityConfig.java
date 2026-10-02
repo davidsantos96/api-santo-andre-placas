@@ -38,7 +38,17 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
                             response.getWriter().write("{\"mensagem\":\"Não autenticado. Faça login novamente.\"}");
+                        })
+                        // O handler padrão usa response.sendError(403), que faz um forward
+                        // interno para /error; essa segunda passada pelo filtro de segurança
+                        // cai no authenticationEntryPoint e vira 401. Escrever direto evita isso.
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write("{\"mensagem\":\"Você não tem permissão para acessar este recurso.\"}");
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
