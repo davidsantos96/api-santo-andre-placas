@@ -16,8 +16,8 @@ public class ServicoController {
         this.servicoService = servicoService;
     }
     @GetMapping
-    public List<ServicoResponse> listar() {
-        return servicoService.listarAtivos().stream()
+    public List<ServicoResponse> listar(@RequestParam(defaultValue = "false") boolean incluirInativos) {
+        return servicoService.listar(incluirInativos).stream()
                 .map(ServicoResponse::fromEntity)
                 .collect(Collectors.toList());
     }

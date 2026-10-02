@@ -12,8 +12,8 @@ public class ServicoService {
         this.servicoRepository = servicoRepository;
     }
 
-    public List<Servico> listarAtivos() {
-        return servicoRepository.findByAtivoTrue();
+    public List<Servico> listar(boolean incluirInativos) {
+        return incluirInativos ? servicoRepository.findAll() : servicoRepository.findByAtivoTrue();
     }
 
     public Servico buscarPorId(Long id) {
