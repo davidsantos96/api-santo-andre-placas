@@ -213,6 +213,65 @@ descartável, removido depois de confirmar):
    continua existindo internamente, reaproveitado por `criarSimples` e
    por `criarPedidoCompleto`.
 
+## ✅ Lote de pendências do backend (PENDENCIAS.md) — 2026-10-02
+
+Fechado a partir do `PENDENCIAS.md` do front, verificado com MockMvc
+descartável **e** contra o Supabase real (ver "Postgres" abaixo). 13 commits
+pequenos; o que mudou de contrato:
+
+- **B16** — acesso negado agora é `403` (JSON). O handler padrão usa
+  `sendError`, que faz forward pra `/error`, e a segunda passada caía no
+  entry point (401). `SecurityConfig` ganhou `accessDeniedHandler`; os dois
+  handlers forçam UTF-8 (`getWriter` usava ISO-8859-1 e estragava acentos).
+- **B13** — `JWT_SECRET` e `ALLOWED_ORIGINS` (vírgula) por variável de
+  ambiente (`app.jwt.secret`, `app.cors.allowed-origins`), com os defaults
+  de dev de antes. **Definir as duas em produção.**
+- **C3** — `GET /servicos?incluirInativos=true`.
+- **B7/B8** — CPF/CNPJ duplicado → `400`, comparando só dígitos
+  (`REPLACE` no JPQL; guarda como o front manda, mascarado). Busca de
+  clientes por dígitos acha CPF/telefone mascarados. Placa: normalizada
+  (`trim` + maiúscula) em `Veiculo.setPlaca` e duplicada → `400`
+  (`findByPlacaIgnoreCase`). Vale também pro `POST /pedidos/completo`.
+- **C2/B15** — cadastro parcial de veículo: só `placa` (+ `clienteId`) é
+  obrigatória; `marcaModelo`, `anoFabricacao`, `anoModelo` (agora `Integer`)
+  e `chassi` são opcionais e podem vir `null` na resposta. Novo
+  `PUT /veiculos/{id}` aplica **só os campos não-nulos** (completar
+  cadastro). **Mudança de schema:** `veiculo.ano_fabricacao` e
+  `ano_modelo` precisaram de `DROP NOT NULL` — o `ddl-auto=update` não
+  relaxa constraint existente. Já aplicado no Supabase de teste; qualquer
+  outro banco já criado precisa do mesmo `ALTER` (a Flyway resolveria).
+- **P2** — `GET /pedidos?busca=` por placa, nome do cliente ou nº do pedido.
+- **B9** — `GET /pagamentos` ordenado por `pagoEm` desc. Todo timestamp de
+  negócio usa `FusoHorario.SAO_PAULO` (`common/`) em vez do fuso padrão da
+  JVM (host em UTC jogaria pagamento da noite no dia seguinte). Testado
+  com a JVM forçada pra UTC.
+- **B10** — recurso inexistente **na URL** (`/{id}`) → `404`
+  (`RecursoNaoEncontradoException`); id inexistente **no corpo**
+  (`clienteId` num `POST /pedidos`) segue `400`.
+- **B11/P29** — `servicos-mais-vendidos` ignora `CANCELADO` e aceita
+  `de`/`ate` (as duas ou nenhuma). `tempo-medio-producao` aceita `de`/`ate`
+  (pedidos que ficaram prontos no período) e devolve
+  `horasMediaPeriodoAnterior` (período de mesma duração logo antes; `null`
+  sem período ou sem dado).
+- **P15** — `ClienteResponse.totalPedidos` (só em `/clientes`; `null`
+  quando o cliente vem aninhado em outra resposta).
+- **P21** — `ServicoResponse.pedidosNoMes` (não cancelados, mês corrente
+  em SP; `null` quando aninhado). `POST/PUT/PATCH /servicos` ainda devolvem
+  a entidade crua, sem esse campo.
+- **P35** — `Usuario.ultimoAcessoEm`, gravado a cada login, em
+  `UsuarioResponse`.
+
+**Postgres (aprendizado importante):** parâmetro nulo sem tipo quebra no
+PostgreSQL (`could not determine data type of parameter`) — `String` dentro
+de `LOWER/UPPER(CONCAT(...))` e `LocalDateTime` em `:x IS NULL`. O H2 não
+acusa. `GET /pedidos` sem datas, `/clientes` sem busca e `/veiculos` sem
+placa já davam 500 no Supabase. Convenção daqui pra frente em `@Query`
+com filtro opcional: texto vazio vira `""`, id de busca vira `-1`, datas
+viram limites (`1970`/`2999`); `Long` e enum com `IS NULL` funcionam.
+**Teste de consulta nova sempre contra o Supabase, não só H2.** Obs.: um
+500 aparece como `401` porque `/error` exige auth (não está liberado no
+`SecurityConfig`) — se virar `401` estranho, olhar o log do servidor.
+
 ## ✅ Chassi do veículo passou a ser opcional — 2026-09-30
 
 `Veiculo.setChassi` validava e lançava `IllegalArgumentException` se
@@ -332,12 +391,15 @@ end. Resta:
    esse padrão; fechar essa lacuna nos outros dois. Vale estender também a
    `ItemEstoque` e `ServicoItemEstoque`, que hoje também recebem a entidade
    JPA crua no `POST`.
-5. **Itens de menor prioridade que sobraram da spec do front** (§15.4 do
-   documento, parágrafo final): filtro `pago=false` em `/pedidos` (o campo
-   `pago` já existe na resposta desde 2026-09-30, falta o filtro por
-   query param), tendência/variação no `TempoMedioProducao`. Reset de
-   senha pelo admin já foi feito (ver seção acima); self-service (usuário
-   troca a própria senha) continua de fora.
+5. **Itens de menor prioridade** (PENDENCIAS.md, ainda abertos no backend):
+   filtro `pago=false` em `/pedidos` (o campo `pago` já existe na
+   resposta); reset de senha self-service (o admin já reseta); proteger
+   desativação/rebaixamento do último ADMIN ativo; política mínima de senha
+   no backend (hoje só o front exige 6 caracteres); `observacao` em
+   movimentação de estoque (B12); paginação de `/clientes` e `/veiculos`
+   (P17); `Cliente`/`Servico` ainda devolvem a entidade crua em
+   `POST/PUT/PATCH`; `/error` sem acesso público faz erro 500 aparecer
+   como 401.
 
 ## Fundamentos de Java já estudados
 
