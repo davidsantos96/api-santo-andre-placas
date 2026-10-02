@@ -1,6 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.cliente;
 import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
+import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,9 +10,15 @@ import java.util.List;
 public class ClienteService {
 
     private final ClienteRepository clienteRepository;
+    private final PedidoRepository pedidoRepository;
 
-    public ClienteService(ClienteRepository clienteRepository) {
+    public ClienteService(ClienteRepository clienteRepository, PedidoRepository pedidoRepository) {
         this.clienteRepository = clienteRepository;
+        this.pedidoRepository = pedidoRepository;
+    }
+
+    public ClienteResponse toResponse(Cliente cliente) {
+        return ClienteResponse.fromEntity(cliente, pedidoRepository.countByClienteId(cliente.getId()));
     }
 
     public List<Cliente> listar(String busca) {

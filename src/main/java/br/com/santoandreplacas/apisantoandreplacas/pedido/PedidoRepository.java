@@ -11,6 +11,17 @@ import java.util.List;
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByStatus(StatusPedido status);
     List<Pedido> findByClienteId(Long clienteId);
+    long countByClienteId(Long clienteId);
+
+    @Query("""
+            SELECT COUNT(p) FROM Pedido p
+            WHERE p.servico.id = :servicoId AND p.status <> :statusExcluido
+              AND p.criadoEm >= :inicio AND p.criadoEm < :fim
+            """)
+    long contarNoPeriodo(@Param("servicoId") Long servicoId,
+                         @Param("statusExcluido") StatusPedido statusExcluido,
+                         @Param("inicio") LocalDateTime inicio,
+                         @Param("fim") LocalDateTime fim);
 
     @Query("""
             SELECT p FROM Pedido p

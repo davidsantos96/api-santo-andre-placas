@@ -19,13 +19,13 @@ public class ClienteController {
     @GetMapping
     public List<ClienteResponse> listar(@RequestParam(required = false) String busca) {
         return clienteService.listar(busca).stream()
-                .map(ClienteResponse::fromEntity)
+                .map(clienteService::toResponse)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     public ClienteResponse buscarPorId(@PathVariable Long id) {
-        return ClienteResponse.fromEntity(clienteService.buscarPorId(id));
+        return clienteService.toResponse(clienteService.buscarPorId(id));
     }
 
     @PostMapping

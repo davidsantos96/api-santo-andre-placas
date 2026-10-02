@@ -1,11 +1,14 @@
 package br.com.santoandreplacas.apisantoandreplacas.usuario;
 
+import java.time.LocalDateTime;
+
 public record UsuarioResponse(
         Long id,
         String nome,
         String email,
         Papel papel,
-        boolean ativo
+        boolean ativo,
+        LocalDateTime ultimoAcessoEm
 ) {
     public static UsuarioResponse fromEntity(Usuario usuario) {
         return new UsuarioResponse(
@@ -13,7 +16,8 @@ public record UsuarioResponse(
                 usuario.getNome(),
                 usuario.getEmail(),
                 usuario.getPapel(),
-                usuario.isAtivo()
+                usuario.isAtivo(),
+                usuario.getUltimoAcessoEm()
         );
     }
 }

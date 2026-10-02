@@ -18,13 +18,13 @@ public class ServicoController {
     @GetMapping
     public List<ServicoResponse> listar(@RequestParam(defaultValue = "false") boolean incluirInativos) {
         return servicoService.listar(incluirInativos).stream()
-                .map(ServicoResponse::fromEntity)
+                .map(servicoService::toResponse)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     public ServicoResponse buscarPorId(@PathVariable Long id) {
-        return ServicoResponse.fromEntity(servicoService.buscarPorId(id));
+        return servicoService.toResponse(servicoService.buscarPorId(id));
     }
 
     @PostMapping

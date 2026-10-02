@@ -1,15 +1,28 @@
 package br.com.santoandreplacas.apisantoandreplacas.servico;
 
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
+import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
+import br.com.santoandreplacas.apisantoandreplacas.pedido.StatusPedido;
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
 public class ServicoService {
 
     private final ServicoRepository servicoRepository;
+    private final PedidoRepository pedidoRepository;
 
-    public ServicoService(ServicoRepository servicoRepository) {
+    public ServicoService(ServicoRepository servicoRepository, PedidoRepository pedidoRepository) {
         this.servicoRepository = servicoRepository;
+        this.pedidoRepository = pedidoRepository;
+    }
+
+    public ServicoResponse toResponse(Servico servico) {
+        LocalDate primeiroDia = LocalDate.now(FusoHorario.SAO_PAULO).withDayOfMonth(1);
+        long pedidosNoMes = pedidoRepository.contarNoPeriodo(servico.getId(), StatusPedido.CANCELADO,
+                primeiroDia.atStartOfDay(), primeiroDia.plusMonths(1).atStartOfDay());
+        return ServicoResponse.fromEntity(servico, pedidosNoMes);
     }
 
     public List<Servico> listar(boolean incluirInativos) {

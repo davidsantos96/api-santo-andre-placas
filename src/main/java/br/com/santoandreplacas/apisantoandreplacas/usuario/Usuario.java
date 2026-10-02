@@ -1,6 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.usuario;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "usuario")
@@ -21,6 +22,8 @@ public class Usuario {
     private Papel papel;
 
     private boolean ativo;
+
+    private LocalDateTime ultimoAcessoEm;
 
     public Long getId() {
         return id;
@@ -56,6 +59,14 @@ public class Usuario {
 
     public void setPapel(Papel papel) {
         this.papel = papel;
+    }
+
+    public LocalDateTime getUltimoAcessoEm() {
+        return ultimoAcessoEm;
+    }
+
+    public void setUltimoAcessoEm(LocalDateTime ultimoAcessoEm) {
+        this.ultimoAcessoEm = ultimoAcessoEm;
     }
 
     public boolean isAtivo() {

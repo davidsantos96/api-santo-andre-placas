@@ -1,10 +1,12 @@
 package br.com.santoandreplacas.apisantoandreplacas.auth;
 
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 import br.com.santoandreplacas.apisantoandreplacas.security.JwtService;
 import br.com.santoandreplacas.apisantoandreplacas.usuario.Usuario;
 import br.com.santoandreplacas.apisantoandreplacas.usuario.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,6 +34,9 @@ public class AuthController {
         if (!usuario.isAtivo()) {
             throw new IllegalArgumentException("Usuário inativo. Contate um administrador.");
         }
+
+        usuario.setUltimoAcessoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
+        usuarioRepository.save(usuario);
 
         String token = jwtService.gerarToken(usuario.getEmail(), usuario.getPapel().name());
 
