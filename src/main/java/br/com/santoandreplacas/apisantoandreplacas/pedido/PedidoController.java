@@ -39,6 +39,7 @@ public class PedidoController {
             @RequestParam(required = false) Long clienteId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate de,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate,
+            @RequestParam(required = false) String busca,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
@@ -46,6 +47,7 @@ public class PedidoController {
                 .listar(status, clienteId,
                         de != null ? de.atStartOfDay() : null,
                         ate != null ? ate.plusDays(1).atStartOfDay() : null,
+                        busca,
                         PageRequest.of(page, size))
                 .map(pedidoService::toResponse);
 

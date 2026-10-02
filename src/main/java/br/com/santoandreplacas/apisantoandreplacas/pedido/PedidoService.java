@@ -72,8 +72,21 @@ public class PedidoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Pedido> listar(StatusPedido status, Long clienteId, LocalDateTime de, LocalDateTime ate, Pageable pageable) {
-        return pedidoRepository.buscar(status, clienteId, de, ate, pageable);
+    public Page<Pedido> listar(StatusPedido status, Long clienteId, LocalDateTime de, LocalDateTime ate,
+                               String busca, Pageable pageable) {
+        String termo = (busca == null || busca.isBlank()) ? null : busca.trim();
+        return pedidoRepository.buscar(status, clienteId, de, ate, termo, parseId(termo), pageable);
+    }
+
+    private Long parseId(String termo) {
+        if (termo == null) {
+            return null;
+        }
+        try {
+            return Long.parseLong(termo);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)
