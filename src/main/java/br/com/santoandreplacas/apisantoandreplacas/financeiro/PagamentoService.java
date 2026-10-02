@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.financeiro;
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.Pedido;
 import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
@@ -35,7 +36,7 @@ public class PagamentoService {
         pagamento.setValorCentavos(request.valorCentavos());
         pagamento.setFormaPagamento(request.formaPagamento());
         pagamento.setStatus(StatusPagamento.PAGO);
-        pagamento.setPagoEm(LocalDateTime.now());
+        pagamento.setPagoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         pagamento.setRegistradoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
 
         return pagamentoRepository.save(pagamento);
@@ -52,7 +53,7 @@ public class PagamentoService {
             throw new IllegalArgumentException("A data final não pode ser anterior à data inicial.");
         }
 
-        List<Pagamento> pagamentos = pagamentoRepository.findByStatusAndPagoEmBetween(
+        List<Pagamento> pagamentos = pagamentoRepository.findByStatusAndPagoEmBetweenOrderByPagoEmDesc(
                 StatusPagamento.PAGO, de.atStartOfDay(), ate.plusDays(1).atStartOfDay());
 
         if (forma == null) {

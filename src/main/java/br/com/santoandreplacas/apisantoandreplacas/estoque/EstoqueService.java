@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.estoque;
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.Pedido;
 import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
@@ -120,7 +121,7 @@ public class EstoqueService {
         movimentacao.setTipo(tipo);
         movimentacao.setQuantidade(quantidade);
         movimentacao.setPedido(pedido);
-        movimentacao.setCriadoEm(LocalDateTime.now());
+        movimentacao.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         return movimentacaoEstoqueRepository.save(movimentacao);
     }
 }

@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.veiculo;
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.cliente.Cliente;
 import br.com.santoandreplacas.apisantoandreplacas.cliente.ClienteRepository;
@@ -53,7 +54,7 @@ public class VeiculoService {
         veiculo.setAnoFabricacao(request.anoFabricacao());
         veiculo.setAnoModelo(request.anoModelo());
         veiculo.setChassi(request.chassi());
-        veiculo.setCriadoEm(LocalDateTime.now());
+        veiculo.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
         return veiculoRepository.save(veiculo);
     }

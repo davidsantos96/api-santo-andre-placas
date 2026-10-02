@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.cliente;
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -28,7 +29,7 @@ public class ClienteService {
 
     public Cliente criar(Cliente cliente) {
         validarCpfCnpjUnico(cliente.getCpfCnpj(), null);
-        cliente.setCriadoEm(LocalDateTime.now());
+        cliente.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         return clienteRepository.save(cliente);
     }
 

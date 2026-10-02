@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.financeiro;
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +25,7 @@ public class PagamentoController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate,
             @RequestParam(required = false) FormaPagamento forma) {
 
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(FusoHorario.SAO_PAULO);
         LocalDate inicio = de != null ? de : hoje;
         LocalDate fim = ate != null ? ate : inicio;
 

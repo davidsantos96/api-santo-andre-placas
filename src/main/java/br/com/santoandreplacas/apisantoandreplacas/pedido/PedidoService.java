@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.pedido;
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -97,8 +98,8 @@ public class PedidoService {
 
     public Pedido criar(Pedido pedido) {
         pedido.setStatus(StatusPedido.RECEBIDO);
-        pedido.setCriadoEm(LocalDateTime.now());
-        pedido.setAtualizadoEm(LocalDateTime.now());
+        pedido.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
+        pedido.setAtualizadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
         Pedido pedidoSalvo = pedidoRepository.save(pedido);
 
@@ -132,7 +133,7 @@ public class PedidoService {
         validarTransicao(statusAnterior, novoStatus);
 
         pedido.setStatus(novoStatus);
-        pedido.setAtualizadoEm(LocalDateTime.now());
+        pedido.setAtualizadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
         registrarHistorico(pedido, statusAnterior, novoStatus);
 
@@ -149,7 +150,7 @@ public class PedidoService {
         historico.setStatusAnterior(statusAnterior);
         historico.setStatusNovo(statusNovo);
         historico.setAlteradoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
-        historico.setAlteradoEm(LocalDateTime.now());
+        historico.setAlteradoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         historicoRepository.save(historico);
     }
 
@@ -195,7 +196,7 @@ public class PedidoService {
         novoCliente.setTelefone(dados.telefone());
         novoCliente.setCpfCnpj(dados.cpfCnpj());
         novoCliente.setEmail(dados.email());
-        novoCliente.setCriadoEm(LocalDateTime.now());
+        novoCliente.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
         return clienteRepository.save(novoCliente);
     }
@@ -210,7 +211,7 @@ public class PedidoService {
         veiculo.setAnoFabricacao(dados.anoFabricacao());
         veiculo.setAnoModelo(dados.anoModelo());
         veiculo.setChassi(dados.chassi());
-        veiculo.setCriadoEm(LocalDateTime.now());
+        veiculo.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
         return veiculoRepository.save(veiculo);
     }

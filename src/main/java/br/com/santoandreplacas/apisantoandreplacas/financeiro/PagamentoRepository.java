@@ -9,6 +9,7 @@ import java.util.List;
 public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     List<Pagamento> findByPedidoId(Long pedidoId);
     List<Pagamento> findByStatusAndPagoEmBetween(StatusPagamento status, LocalDateTime inicio, LocalDateTime fim);
+    List<Pagamento> findByStatusAndPagoEmBetweenOrderByPagoEmDesc(StatusPagamento status, LocalDateTime inicio, LocalDateTime fim);
 
     @Query("""
             SELECT COALESCE(SUM(p.valorCentavos), 0) FROM Pagamento p

@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.dashboard;
+import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.estoque.ItemEstoqueRepository;
 import br.com.santoandreplacas.apisantoandreplacas.financeiro.Pagamento;
@@ -39,7 +40,7 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public ResumoResponse resumo() {
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(FusoHorario.SAO_PAULO);
         List<Pedido> todosPedidos = pedidoRepository.findAll();
 
         long pedidosHoje = todosPedidos.stream()
