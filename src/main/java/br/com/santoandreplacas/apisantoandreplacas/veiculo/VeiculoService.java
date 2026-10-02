@@ -24,7 +24,8 @@ public class VeiculoService {
     }
 
     public List<Veiculo> listar(String placa, Long clienteId) {
-        return veiculoRepository.buscar(placa, clienteId);
+        // "" em vez de null: no PostgreSQL um String nulo dentro de UPPER(CONCAT(...)) perde o tipo
+        return veiculoRepository.buscar(placa == null ? "" : placa.trim(), clienteId);
     }
 
     public Veiculo buscarPorId(Long id) {

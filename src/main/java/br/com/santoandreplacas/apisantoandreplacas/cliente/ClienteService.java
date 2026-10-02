@@ -23,11 +23,8 @@ public class ClienteService {
     }
 
     public List<Cliente> listar(String busca) {
-        String buscaDigitos = busca == null ? null : busca.replaceAll("\\D", "");
-        if (buscaDigitos != null && buscaDigitos.isEmpty()) {
-            buscaDigitos = null;
-        }
-        return clienteRepository.buscar(busca, buscaDigitos);
+        String termo = busca == null ? "" : busca.trim();
+        return clienteRepository.buscar(termo, termo.replaceAll("\\D", ""));
     }
 
     public Cliente buscarPorId(Long id) {

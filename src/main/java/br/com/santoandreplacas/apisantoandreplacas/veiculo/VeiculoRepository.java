@@ -10,7 +10,7 @@ public interface VeiculoRepository extends JpaRepository<Veiculo, Long> {
 
     @Query("""
             SELECT v FROM Veiculo v
-            WHERE (:placa IS NULL OR UPPER(v.placa) LIKE UPPER(CONCAT('%', :placa, '%')))
+            WHERE (:placa = '' OR UPPER(v.placa) LIKE UPPER(CONCAT('%', :placa, '%')))
               AND (:clienteId IS NULL OR v.cliente.id = :clienteId)
             """)
     List<Veiculo> buscar(@Param("placa") String placa, @Param("clienteId") Long clienteId);

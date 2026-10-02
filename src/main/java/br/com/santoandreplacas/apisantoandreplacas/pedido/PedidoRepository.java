@@ -27,12 +27,12 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
             SELECT p FROM Pedido p
             WHERE (:status IS NULL OR p.status = :status)
               AND (:clienteId IS NULL OR p.cliente.id = :clienteId)
-              AND (:de IS NULL OR p.criadoEm >= :de)
-              AND (:ate IS NULL OR p.criadoEm < :ate)
-              AND (:busca IS NULL
+              AND p.criadoEm >= :de
+              AND p.criadoEm < :ate
+              AND (:busca = ''
                    OR UPPER(p.veiculo.placa) LIKE UPPER(CONCAT('%', :busca, '%'))
                    OR LOWER(p.cliente.nome) LIKE LOWER(CONCAT('%', :busca, '%'))
-                   OR (:buscaId IS NOT NULL AND p.id = :buscaId))
+                   OR p.id = :buscaId)
             ORDER BY p.criadoEm DESC
             """)
     Page<Pedido> buscar(@Param("status") StatusPedido status,
@@ -40,6 +40,6 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
                          @Param("de") LocalDateTime de,
                          @Param("ate") LocalDateTime ate,
                          @Param("busca") String busca,
-                         @Param("buscaId") Long buscaId,
+                         @Param("buscaId") long buscaId,
                          Pageable pageable);
 }

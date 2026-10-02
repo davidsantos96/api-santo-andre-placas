@@ -76,18 +76,21 @@ public class PedidoService {
     @Transactional(readOnly = true)
     public Page<Pedido> listar(StatusPedido status, Long clienteId, LocalDateTime de, LocalDateTime ate,
                                String busca, Pageable pageable) {
-        String termo = (busca == null || busca.isBlank()) ? null : busca.trim();
-        return pedidoRepository.buscar(status, clienteId, de, ate, termo, parseId(termo), pageable);
+        // "" e -1 (id que nunca existe) em vez de null: no PostgreSQL um parâmetro
+        // String nulo dentro de UPPER/LOWER(CONCAT(...)) perde o tipo e a consulta falha.
+        // Mesmo motivo para as datas: sem filtro, usa limites que cobrem qualquer pedido.
+        String termo = busca == null ? "" : busca.trim();
+        return pedidoRepository.buscar(status, clienteId,
+                de != null ? de : LocalDateTime.of(1970, 1, 1, 0, 0),
+                ate != null ? ate : LocalDateTime.of(2999, 12, 31, 0, 0),
+                termo, parseId(termo), pageable);
     }
 
-    private Long parseId(String termo) {
-        if (termo == null) {
-            return null;
-        }
+    private long parseId(String termo) {
         try {
             return Long.parseLong(termo);
         } catch (NumberFormatException e) {
-            return null;
+            return -1L;
         }
     }
 
