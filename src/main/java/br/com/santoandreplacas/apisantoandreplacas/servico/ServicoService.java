@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.servico;
+import br.com.santoandreplacas.apisantoandreplacas.exception.RecursoNaoEncontradoException;
 
 import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
@@ -31,7 +32,7 @@ public class ServicoService {
 
     public Servico buscarPorId(Long id) {
         return servicoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado: " + id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Serviço não encontrado: " + id));
     }
 
     public Servico criar(Servico servico) {

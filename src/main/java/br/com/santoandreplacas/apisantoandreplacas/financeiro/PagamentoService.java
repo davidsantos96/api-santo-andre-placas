@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.financeiro;
+import br.com.santoandreplacas.apisantoandreplacas.exception.RecursoNaoEncontradoException;
 import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.Pedido;
@@ -29,7 +30,7 @@ public class PagamentoService {
 
     public Pagamento registrarPagamento(Long pedidoId, NovoPagamentoRequest request) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado: " + pedidoId));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido não encontrado: " + pedidoId));
 
         Pagamento pagamento = new Pagamento();
         pagamento.setPedido(pedido);

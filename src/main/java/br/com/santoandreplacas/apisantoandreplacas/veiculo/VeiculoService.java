@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.veiculo;
+import br.com.santoandreplacas.apisantoandreplacas.exception.RecursoNaoEncontradoException;
 import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.cliente.Cliente;
@@ -28,7 +29,7 @@ public class VeiculoService {
 
     public Veiculo buscarPorId(Long id) {
         return veiculoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Veiculo não encontrado: " + id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Veiculo não encontrado: " + id));
     }
 
     public void validarPlacaUnica(String placa, Long idIgnorado) {

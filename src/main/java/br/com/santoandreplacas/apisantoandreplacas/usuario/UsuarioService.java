@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.usuario;
+import br.com.santoandreplacas.apisantoandreplacas.exception.RecursoNaoEncontradoException;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class UsuarioService {
 
     public Usuario buscarPorId(Long id) {
         return usuarioRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado: " + id));
     }
 
     public Usuario criar(NovoUsuarioRequest request) {

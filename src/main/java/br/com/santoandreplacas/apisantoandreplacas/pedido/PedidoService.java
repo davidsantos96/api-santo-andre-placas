@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.pedido;
+import br.com.santoandreplacas.apisantoandreplacas.exception.RecursoNaoEncontradoException;
 import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import org.springframework.data.domain.Page;
@@ -93,7 +94,7 @@ public class PedidoService {
     @Transactional(readOnly = true)
     public Pedido buscarPorId(Long id) {
         return pedidoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado: " + id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Pedido não encontrado: " + id));
     }
 
     public Pedido criar(Pedido pedido) {

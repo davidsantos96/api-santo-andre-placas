@@ -1,4 +1,5 @@
 package br.com.santoandreplacas.apisantoandreplacas.cliente;
+import br.com.santoandreplacas.apisantoandreplacas.exception.RecursoNaoEncontradoException;
 import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
@@ -31,7 +32,7 @@ public class ClienteService {
 
     public Cliente buscarPorId(Long id) {
         return clienteRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + id));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente não encontrado: " + id));
     }
 
     public Cliente criar(Cliente cliente) {
