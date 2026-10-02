@@ -34,6 +34,11 @@ public class VeiculoController {
         return VeiculoResponse.fromEntity(veiculoService.criar(request));
     }
 
+    @PutMapping("/{id}")
+    public VeiculoResponse atualizar(@PathVariable Long id, @RequestBody AtualizarVeiculoRequest request) {
+        return VeiculoResponse.fromEntity(veiculoService.atualizar(id, request));
+    }
+
     @PostMapping("/{id}/consultar")
     public ConsultaVeicularResultado consultar(@PathVariable Long id) {
         return veiculoService.consultar(id);

@@ -1,7 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.veiculo;
 
-public record NovoVeiculoRequest(
-        Long clienteId,
+// Só os campos não-nulos são aplicados: serve para completar um cadastro parcial.
+public record AtualizarVeiculoRequest(
         String placa,
         String marcaModelo,
         Integer anoFabricacao,

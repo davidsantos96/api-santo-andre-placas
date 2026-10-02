@@ -58,6 +58,29 @@ public class VeiculoService {
         return veiculoRepository.save(veiculo);
     }
 
+    public Veiculo atualizar(Long id, AtualizarVeiculoRequest request) {
+        Veiculo veiculo = buscarPorId(id);
+
+        if (request.placa() != null) {
+            validarPlacaUnica(request.placa(), id);
+            veiculo.setPlaca(request.placa());
+        }
+        if (request.marcaModelo() != null) {
+            veiculo.setMarcaModelo(request.marcaModelo());
+        }
+        if (request.anoFabricacao() != null) {
+            veiculo.setAnoFabricacao(request.anoFabricacao());
+        }
+        if (request.anoModelo() != null) {
+            veiculo.setAnoModelo(request.anoModelo());
+        }
+        if (request.chassi() != null) {
+            veiculo.setChassi(request.chassi());
+        }
+
+        return veiculoRepository.save(veiculo);
+    }
+
     public ConsultaVeicularResultado consultar(Long id) {
         Veiculo veiculo = buscarPorId(id);
         return consultaVeicularProvider.consultar(veiculo.getPlaca());

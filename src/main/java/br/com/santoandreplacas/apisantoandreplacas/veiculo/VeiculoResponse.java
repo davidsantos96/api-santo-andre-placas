@@ -4,8 +4,8 @@ public record VeiculoResponse(
         Long id,
         String placa,
         String marcaModelo,
-        int anoFabricacao,
-        int anoModelo,
+        Integer anoFabricacao,
+        Integer anoModelo,
         String chassi,
         Long clienteId,
         String clienteNome

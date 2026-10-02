@@ -19,8 +19,8 @@ public class Veiculo {
 
     private String placa;
     private String marcaModelo;
-    private int anoFabricacao;
-    private int anoModelo;
+    private Integer anoFabricacao;
+    private Integer anoModelo;
     private String chassi;
 
 
@@ -60,29 +60,26 @@ public class Veiculo {
         return marcaModelo;
     }
     public void setMarcaModelo(String marcaModelo) {
-        if (marcaModelo == null || marcaModelo.isBlank()) {
-            throw new IllegalArgumentException("Marca e modelo não pode ser vazio");
-        }
         this.marcaModelo = marcaModelo;
     }
 
-    public int getAnoFabricacao() {
+    public Integer getAnoFabricacao() {
         return anoFabricacao;
     }
 
-    public void setAnoFabricacao(int anoFabricacao) {
-        if (anoFabricacao < 1900) {
+    public void setAnoFabricacao(Integer anoFabricacao) {
+        if (anoFabricacao != null && anoFabricacao < 1900) {
             throw new IllegalArgumentException("Ano de fabricação inválido.");
         }
         this.anoFabricacao = anoFabricacao;
     }
 
-    public int getAnoModelo() {
+    public Integer getAnoModelo() {
         return anoModelo;
     }
 
-    public void setAnoModelo(int anoModelo) {
-        if (anoModelo < 1900) {
+    public void setAnoModelo(Integer anoModelo) {
+        if (anoModelo != null && anoModelo < 1900) {
             throw new IllegalArgumentException("Ano do modelo inválido.");
         }
         this.anoModelo = anoModelo;
