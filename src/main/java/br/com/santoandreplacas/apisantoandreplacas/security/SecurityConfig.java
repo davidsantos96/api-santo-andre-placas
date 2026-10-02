@@ -1,6 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.security;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -19,9 +20,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final List<String> origensPermitidas;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          @Value("${app.cors.allowed-origins}") List<String> origensPermitidas) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.origensPermitidas = origensPermitidas;
     }
 
     @Bean
@@ -64,10 +68,10 @@ public class SecurityConfig {
 
     // Front (Vite) roda em outra origem/porta durante o desenvolvimento — sem
     // isso o navegador bloqueia toda chamada à API antes mesmo do JWT entrar
-    // em jogo. Ajustar allowedOrigins quando o front for hospedado.
+    // em jogo. Em produção, definir ALLOWED_ORIGINS (separadas por vírgula).
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+        configuration.setAllowedOrigins(origensPermitidas);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 

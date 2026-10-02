@@ -2,17 +2,20 @@ package br.com.santoandreplacas.apisantoandreplacas.security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
 public class JwtService {
 
-    // Em produção, essa chave viria de uma variável de ambiente, nunca fixa no código
-    private final SecretKey chave = Keys.hmacShaKeyFor(
-            "chave-secreta-temporaria-para-estudo-trocar-depois-1234567890".getBytes()
-    );
+    private final SecretKey chave;
+
+    public JwtService(@Value("${app.jwt.secret}") String segredo) {
+        this.chave = Keys.hmacShaKeyFor(segredo.getBytes(StandardCharsets.UTF_8));
+    }
 
     private final long expiracaoMs = 28_800_000; // 8 horas — cobre um turno de trabalho; sem refresh token (decisão registrada no CONTEXT.md)
 
