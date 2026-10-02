@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -86,8 +87,15 @@ public class DashboardService {
     }
 
     @Transactional(readOnly = true)
-    public List<ServicoMaisVendidoResponse> servicosMaisVendidos() {
-        List<Pedido> pedidos = pedidoRepository.findAll();
+    public List<ServicoMaisVendidoResponse> servicosMaisVendidos(LocalDate de, LocalDate ate) {
+        validarPeriodo(de, ate);
+
+        List<Pedido> pedidos = pedidoRepository.findAll().stream()
+                .filter(p -> p.getStatus() != StatusPedido.CANCELADO)
+                .filter(p -> de == null || (p.getCriadoEm() != null
+                        && !p.getCriadoEm().isBefore(de.atStartOfDay())
+                        && p.getCriadoEm().isBefore(ate.plusDays(1).atStartOfDay())))
+                .collect(Collectors.toList());
 
         Map<Long, List<Pedido>> porServico = pedidos.stream()
                 .collect(Collectors.groupingBy(p -> p.getServico().getId()));
@@ -115,29 +123,74 @@ public class DashboardService {
      * representam espera, não produção de fato (ver descrição dos enums
      * em StatusPedido).
      */
+    /**
+     * Com período (de/ate), considera os pedidos que ficaram prontos dentro dele e
+     * devolve também a média do período anterior (mesma duração, logo antes) em
+     * horasMediaPeriodoAnterior, para o front mostrar a tendência. Sem período,
+     * considera tudo e não há comparação.
+     */
     @Transactional(readOnly = true)
-    public TempoMedioProducaoResponse tempoMedioProducao() {
+    public TempoMedioProducaoResponse tempoMedioProducao(LocalDate de, LocalDate ate) {
+        validarPeriodo(de, ate);
+
         List<PedidoStatusHistorico> entradas = historicoRepository.findByStatusNovoIn(
                 List.of(StatusPedido.EM_PROCESSAMENTO, StatusPedido.PLACA_PRONTA));
 
         Map<Long, List<PedidoStatusHistorico>> porPedido = entradas.stream()
                 .collect(Collectors.groupingBy(h -> h.getPedido().getId()));
 
-        List<Long> duracoesEmMinutos = porPedido.values().stream()
-                .map(this::calcularDuracaoProducao)
-                .filter(duracao -> duracao != null)
+        List<Producao> producoes = porPedido.values().stream()
+                .map(this::calcularProducao)
+                .filter(producao -> producao != null)
                 .collect(Collectors.toList());
 
-        if (duracoesEmMinutos.isEmpty()) {
-            return new TempoMedioProducaoResponse(0, 0);
+        if (de == null) {
+            return resumirProducoes(producoes, null);
         }
 
-        double mediaEmMinutos = duracoesEmMinutos.stream().mapToLong(Long::longValue).average().orElse(0);
+        long dias = ChronoUnit.DAYS.between(de, ate) + 1;
+        LocalDate deAnterior = de.minusDays(dias);
+        LocalDate ateAnterior = de.minusDays(1);
 
-        return new TempoMedioProducaoResponse(mediaEmMinutos / 60.0, duracoesEmMinutos.size());
+        TempoMedioProducaoResponse atual = resumirProducoes(filtrarPorFim(producoes, de, ate), null);
+        List<Producao> anteriores = filtrarPorFim(producoes, deAnterior, ateAnterior);
+        Double mediaAnterior = anteriores.isEmpty() ? null : mediaEmHoras(anteriores);
+
+        return new TempoMedioProducaoResponse(atual.horasMedia(), atual.pedidosConsiderados(), mediaAnterior);
     }
 
-    private Long calcularDuracaoProducao(List<PedidoStatusHistorico> historicoDoPedido) {
+    private void validarPeriodo(LocalDate de, LocalDate ate) {
+        if ((de == null) != (ate == null)) {
+            throw new IllegalArgumentException("Informe as duas datas (de e ate) ou nenhuma.");
+        }
+        if (de != null && ate.isBefore(de)) {
+            throw new IllegalArgumentException("A data final não pode ser anterior à data inicial.");
+        }
+    }
+
+    private List<Producao> filtrarPorFim(List<Producao> producoes, LocalDate de, LocalDate ate) {
+        LocalDateTime inicio = de.atStartOfDay();
+        LocalDateTime fim = ate.plusDays(1).atStartOfDay();
+        return producoes.stream()
+                .filter(p -> !p.fim().isBefore(inicio) && p.fim().isBefore(fim))
+                .collect(Collectors.toList());
+    }
+
+    private TempoMedioProducaoResponse resumirProducoes(List<Producao> producoes, Double mediaAnterior) {
+        if (producoes.isEmpty()) {
+            return new TempoMedioProducaoResponse(0, 0, mediaAnterior);
+        }
+        return new TempoMedioProducaoResponse(mediaEmHoras(producoes), producoes.size(), mediaAnterior);
+    }
+
+    private double mediaEmHoras(List<Producao> producoes) {
+        return producoes.stream().mapToLong(Producao::minutos).average().orElse(0) / 60.0;
+    }
+
+    private record Producao(LocalDateTime fim, long minutos) {
+    }
+
+    private Producao calcularProducao(List<PedidoStatusHistorico> historicoDoPedido) {
         LocalDateTime inicioProducao = historicoDoPedido.stream()
                 .filter(h -> h.getStatusNovo() == StatusPedido.EM_PROCESSAMENTO)
                 .map(PedidoStatusHistorico::getAlteradoEm)
@@ -154,6 +207,6 @@ public class DashboardService {
             return null;
         }
 
-        return Duration.between(inicioProducao, fimProducao).toMinutes();
+        return new Producao(fimProducao, Duration.between(inicioProducao, fimProducao).toMinutes());
     }
 }

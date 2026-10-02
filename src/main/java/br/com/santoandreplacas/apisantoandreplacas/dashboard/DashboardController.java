@@ -36,12 +36,16 @@ public class DashboardController {
     }
 
     @GetMapping("/servicos-mais-vendidos")
-    public List<ServicoMaisVendidoResponse> servicosMaisVendidos() {
-        return dashboardService.servicosMaisVendidos();
+    public List<ServicoMaisVendidoResponse> servicosMaisVendidos(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate de,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate) {
+        return dashboardService.servicosMaisVendidos(de, ate);
     }
 
     @GetMapping("/tempo-medio-producao")
-    public TempoMedioProducaoResponse tempoMedioProducao() {
-        return dashboardService.tempoMedioProducao();
+    public TempoMedioProducaoResponse tempoMedioProducao(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate de,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate) {
+        return dashboardService.tempoMedioProducao(de, ate);
     }
 }
