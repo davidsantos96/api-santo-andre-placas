@@ -195,31 +195,25 @@ public class PedidoService {
             throw new IllegalArgumentException("Informe clienteId ou os dados de um novo cliente.");
         }
 
-        clienteService.validarCpfCnpjUnico(dados.cpfCnpj(), null);
-
         Cliente novoCliente = new Cliente();
         novoCliente.setNome(dados.nome());
         novoCliente.setTelefone(dados.telefone());
         novoCliente.setCpfCnpj(dados.cpfCnpj());
         novoCliente.setEmail(dados.email());
-        novoCliente.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
-        return clienteRepository.save(novoCliente);
+        // Via o service, não o repositório: é ele que valida CPF/CNPJ duplicado e
+        // preenche criadoEm/autor. O mesmo vale pro veículo abaixo.
+        return clienteService.criar(novoCliente);
     }
 
     private Veiculo criarVeiculo(NovoVeiculoRequest dados, Cliente cliente) {
-        veiculoService.validarPlacaUnica(dados.placa(), null);
-
-        Veiculo veiculo = new Veiculo();
-        veiculo.setCliente(cliente);
-        veiculo.setPlaca(dados.placa());
-        veiculo.setMarcaModelo(dados.marcaModelo());
-        veiculo.setAnoFabricacao(dados.anoFabricacao());
-        veiculo.setAnoModelo(dados.anoModelo());
-        veiculo.setChassi(dados.chassi());
-        veiculo.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
-
-        return veiculoRepository.save(veiculo);
+        return veiculoService.criar(new br.com.santoandreplacas.apisantoandreplacas.veiculo.NovoVeiculoRequest(
+                cliente.getId(),
+                dados.placa(),
+                dados.marcaModelo(),
+                dados.anoFabricacao(),
+                dados.anoModelo(),
+                dados.chassi()));
     }
 
 }

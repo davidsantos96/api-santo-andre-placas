@@ -4,6 +4,7 @@ import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.cliente.Cliente;
 import br.com.santoandreplacas.apisantoandreplacas.cliente.ClienteRepository;
+import br.com.santoandreplacas.apisantoandreplacas.usuario.UsuarioAutenticadoProvider;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,13 +15,16 @@ public class VeiculoService {
     private final VeiculoRepository veiculoRepository;
     private final ClienteRepository clienteRepository;
     private final ConsultaVeicularProvider consultaVeicularProvider;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
 
     public VeiculoService(VeiculoRepository veiculoRepository,
                           ClienteRepository clienteRepository,
-                          ConsultaVeicularProvider consultaVeicularProvider) {
+                          ConsultaVeicularProvider consultaVeicularProvider,
+                          UsuarioAutenticadoProvider usuarioAutenticadoProvider) {
         this.veiculoRepository = veiculoRepository;
         this.clienteRepository = clienteRepository;
         this.consultaVeicularProvider = consultaVeicularProvider;
+        this.usuarioAutenticadoProvider = usuarioAutenticadoProvider;
     }
 
     public List<Veiculo> listar(String placa, Long clienteId) {
@@ -56,6 +60,8 @@ public class VeiculoService {
         veiculo.setAnoFabricacao(request.anoFabricacao());
         veiculo.setAnoModelo(request.anoModelo());
         veiculo.setChassi(request.chassi());
+        veiculo.setCriadoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
+        veiculo.setCriadoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
         veiculo.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
         return veiculoRepository.save(veiculo);
@@ -80,6 +86,10 @@ public class VeiculoService {
         if (request.chassi() != null) {
             veiculo.setChassi(request.chassi());
         }
+
+        veiculo.setAtualizadoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
+        veiculo.setAtualizadoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
+        veiculo.setAtualizadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
         return veiculoRepository.save(veiculo);
     }

@@ -1,5 +1,9 @@
 package br.com.santoandreplacas.apisantoandreplacas.cliente;
 
+import br.com.santoandreplacas.apisantoandreplacas.usuario.Usuario;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,7 +23,21 @@ public class Cliente {
     private String telefone;
     private String cpfCnpj;
     private String email;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_usuario_id")
+    private Usuario criadoPorUsuario;
+
+    private String criadoPor; // snapshot do nome na hora da ação
+
     private LocalDateTime criadoEm;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "atualizado_por_usuario_id")
+    private Usuario atualizadoPorUsuario;
+
+    private String atualizadoPor;
+
+    private LocalDateTime atualizadoEm;
 
     public Long getId() {
         return id;
@@ -66,5 +84,45 @@ public class Cliente {
 
     public void setCriadoEm(LocalDateTime criadoEm) {
         this.criadoEm = criadoEm;
+    }
+
+    public Usuario getCriadoPorUsuario() {
+        return criadoPorUsuario;
+    }
+
+    public void setCriadoPorUsuario(Usuario criadoPorUsuario) {
+        this.criadoPorUsuario = criadoPorUsuario;
+    }
+
+    public String getCriadoPor() {
+        return criadoPor;
+    }
+
+    public void setCriadoPor(String criadoPor) {
+        this.criadoPor = criadoPor;
+    }
+
+    public Usuario getAtualizadoPorUsuario() {
+        return atualizadoPorUsuario;
+    }
+
+    public void setAtualizadoPorUsuario(Usuario atualizadoPorUsuario) {
+        this.atualizadoPorUsuario = atualizadoPorUsuario;
+    }
+
+    public String getAtualizadoPor() {
+        return atualizadoPor;
+    }
+
+    public void setAtualizadoPor(String atualizadoPor) {
+        this.atualizadoPor = atualizadoPor;
+    }
+
+    public LocalDateTime getAtualizadoEm() {
+        return atualizadoEm;
+    }
+
+    public void setAtualizadoEm(LocalDateTime atualizadoEm) {
+        this.atualizadoEm = atualizadoEm;
     }
 }

@@ -1,5 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.veiculo;
 
+import java.time.LocalDateTime;
+
 public record VeiculoResponse(
         Long id,
         String placa,
@@ -8,7 +10,13 @@ public record VeiculoResponse(
         Integer anoModelo,
         String chassi,
         Long clienteId,
-        String clienteNome
+        String clienteNome,
+        LocalDateTime criadoEm,
+        String criadoPor,
+        Long criadoPorId,
+        LocalDateTime atualizadoEm,
+        String atualizadoPor,
+        Long atualizadoPorId
 ) {
     public static VeiculoResponse fromEntity(Veiculo veiculo) {
         return new VeiculoResponse(
@@ -19,7 +27,13 @@ public record VeiculoResponse(
                 veiculo.getAnoModelo(),
                 veiculo.getChassi(),
                 veiculo.getCliente().getId(),
-                veiculo.getCliente().getNome()
+                veiculo.getCliente().getNome(),
+                veiculo.getCriadoEm(),
+                veiculo.getCriadoPor(),
+                veiculo.getCriadoPorUsuario() != null ? veiculo.getCriadoPorUsuario().getId() : null,
+                veiculo.getAtualizadoEm(),
+                veiculo.getAtualizadoPor(),
+                veiculo.getAtualizadoPorUsuario() != null ? veiculo.getAtualizadoPorUsuario().getId() : null
         );
     }
 }

@@ -11,6 +11,11 @@ public record ClienteResponse(
         String cpfCnpj,
         String email,
         LocalDateTime criadoEm,
+        String criadoPor,
+        Long criadoPorId,
+        LocalDateTime atualizadoEm,
+        String atualizadoPor,
+        Long atualizadoPorId,
         Long totalPedidos
 ) {
     public static ClienteResponse fromEntity(Cliente cliente) {
@@ -25,6 +30,11 @@ public record ClienteResponse(
                 cliente.getCpfCnpj(),
                 cliente.getEmail(),
                 cliente.getCriadoEm(),
+                cliente.getCriadoPor(),
+                cliente.getCriadoPorUsuario() != null ? cliente.getCriadoPorUsuario().getId() : null,
+                cliente.getAtualizadoEm(),
+                cliente.getAtualizadoPor(),
+                cliente.getAtualizadoPorUsuario() != null ? cliente.getAtualizadoPorUsuario().getId() : null,
                 totalPedidos
         );
     }

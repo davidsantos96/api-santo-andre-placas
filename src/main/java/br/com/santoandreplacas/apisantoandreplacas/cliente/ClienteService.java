@@ -3,6 +3,7 @@ import br.com.santoandreplacas.apisantoandreplacas.exception.RecursoNaoEncontrad
 import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
+import br.com.santoandreplacas.apisantoandreplacas.usuario.UsuarioAutenticadoProvider;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,10 +13,14 @@ public class ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final PedidoRepository pedidoRepository;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
 
-    public ClienteService(ClienteRepository clienteRepository, PedidoRepository pedidoRepository) {
+    public ClienteService(ClienteRepository clienteRepository,
+                          PedidoRepository pedidoRepository,
+                          UsuarioAutenticadoProvider usuarioAutenticadoProvider) {
         this.clienteRepository = clienteRepository;
         this.pedidoRepository = pedidoRepository;
+        this.usuarioAutenticadoProvider = usuarioAutenticadoProvider;
     }
 
     public ClienteResponse toResponse(Cliente cliente) {
@@ -34,6 +39,8 @@ public class ClienteService {
 
     public Cliente criar(Cliente cliente) {
         validarCpfCnpjUnico(cliente.getCpfCnpj(), null);
+        cliente.setCriadoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
+        cliente.setCriadoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
         cliente.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         return clienteRepository.save(cliente);
     }
@@ -45,6 +52,9 @@ public class ClienteService {
         existente.setTelefone(dadosAtualizados.getTelefone());
         existente.setCpfCnpj(dadosAtualizados.getCpfCnpj());
         existente.setEmail(dadosAtualizados.getEmail());
+        existente.setAtualizadoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
+        existente.setAtualizadoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
+        existente.setAtualizadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         return clienteRepository.save(existente);
     }
 
