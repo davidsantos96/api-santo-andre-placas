@@ -213,6 +213,44 @@ descartável, removido depois de confirmar):
    continua existindo internamente, reaproveitado por `criarSimples` e
    por `criarPedidoCompleto`.
 
+## 🔴 B19 — vazamento do hash de senha em POST/PUT /clientes (corrigido)
+
+Encontrado pelo front em 2026-10-07, **introduzido pela própria rodada de
+rastreabilidade** (`d20edbb`). Fica registrado porque é a lição mais cara
+da sessão.
+
+**O que acontecia:** `POST /clientes` e `PUT /clientes/{id}` devolviam a
+entidade `Cliente` crua (eram as duas únicas rotas de cliente que não
+usavam DTO — os `GET` já usavam). Ao adicionar `criadoPorUsuario` /
+`atualizadoPorUsuario` como `@ManyToOne`, o Jackson passou a serializar o
+`Usuario` inteiro dentro da resposta: `senhaHash` em bcrypt, e-mail,
+papel, `ultimoAcessoEm` (e até `hibernateLazyInitializer`).
+
+**Pior que o relatado:** a resposta do `PUT` inclui `criadoPorUsuario`,
+que é o autor **original** do cadastro. Reproduzido: ATENDENTE editando
+cliente criado pelo ADMIN recebeu o hash e o e-mail do ADMIN. Isso é
+escalonamento de privilégio (quebra offline da senha do admin), não só
+exposição do próprio hash.
+
+**Correção em duas camadas** (`3ebbf2d`):
+1. As rotas devolvem `ClienteResponse` — resolve também o B20, porque
+   passam a trazer `criadoPorId`/`atualizadoPorId` como os `GET`.
+2. `@JsonIgnore` em `Usuario.senhaHash`: nenhuma serialização futura de
+   entidade leva o hash, mesmo que alguém volte a devolver entidade crua.
+   `Usuario` nunca é desserializado de JSON (a entrada usa records), então
+   não quebra binding.
+
+`RespostasNaoVazamCredenciaisTest` é **permanente** (os demais smokes
+desta sessão foram descartáveis): é guarda de vazamento de credencial, e
+foi verificado que falha sem cada uma das duas camadas.
+
+**Lição:** adicionar `@ManyToOne` numa entidade muda o que vaza em
+**toda** rota que devolve essa entidade crua. Antes de adicionar
+relacionamento, conferir se alguma rota serializa a entidade direto —
+`grep` por `public <Entidade> ` nos controllers. `POST/PUT/PATCH
+/servicos` seguem devolvendo entidade crua; hoje não vazam nada (`Servico`
+não referencia `Usuario`), mas é o mesmo padrão latente.
+
 ## ✅ Rastreabilidade (quem fez o quê) — 2026-10-07
 
 Mapa do que é rastreável hoje:
@@ -480,9 +518,11 @@ end. Resta:
    desativação/rebaixamento do último ADMIN ativo; política mínima de senha
    no backend (hoje só o front exige 6 caracteres); `observacao` em
    movimentação de estoque (B12); paginação de `/clientes` e `/veiculos`
-   (P17); `Cliente`/`Servico` ainda devolvem a entidade crua em
-   `POST/PUT/PATCH`; `/error` sem acesso público faz erro 500 aparecer
-   como 401.
+   (P17); **`Servico` ainda devolve a entidade crua em `POST/PUT/PATCH`**
+   (`Cliente` foi corrigido no B19; trocar por `ServicoResponse` tira
+   `codigoExterno` e acrescenta `pedidosNoMes` na resposta dessas rotas, por
+   isso não foi feito junto); `/error` sem acesso público faz erro 500
+   aparecer como 401.
 6. **Rastreabilidade: concluída** (ver a seção de 2026-10-07). Toda escrita
    de domínio exposta pela API grava autor com FK + snapshot do nome.
    Sobra só o fallback silencioso `"sistema"` do
