@@ -258,24 +258,30 @@ O que foi feito nesta rodada:
 só `criadoEm`, e o `PUT` não deixa rastro) e `ItemEstoque`
 (criação/edição). `ServicoItemEstoque` (vínculo) também não.
 
-**Duas fragilidades conhecidas, de propósito:**
-1. `alteradoPor`/`registradoPor`/`feitoPor` guardam o **nome** (ou e-mail)
-   como texto, não FK pra `Usuario`. Renomear o usuário não reescreve o
-   histórico (o que é bom), mas dois usuários de mesmo nome ficam
-   ambíguos. Migrar pra FK + snapshot do nome é o próximo passo combinado,
-   "se valer".
-2. `UsuarioAutenticadoProvider` cai em `"sistema"` quando não há
-   autenticação no contexto. Numa requisição HTTP autenticada isso não
-   deveria acontecer, então hoje mascara bug em vez de denunciar.
+### FK de autoria + snapshot do preço — 2026-10-07 (mesma rodada, depois)
 
-**Nota não resolvida (fora do escopo desta rodada):** `Pedido` não guarda
-snapshot do preço do serviço — aponta pra `Servico` por FK e
-`PedidoResponse` mostra o preço **atual**. Mudar o preço de um serviço
-muda retroativamente o valor nominal de pedidos antigos. Os pagamentos
-(`Pagamento.valorCentavos`) são snapshot, então o caixa não é afetado; o
-que distorce é o valor nominal do pedido e o `faturamentoNominalCentavos`
-do dashboard. Com a auditoria de preço dá pra reconstruir, mas o certo
-seria `precoCentavos` no próprio `Pedido`.
+- **Autoria virou FK.** `PedidoStatusHistorico`, `Pagamento`,
+  `MovimentacaoEstoque` e `RegistroAuditoria` ganharam
+  `@ManyToOne Usuario` **nullable** (`alterado_por_usuario_id`,
+  `registrado_por_usuario_id`, `feito_por_usuario_id`) **ao lado** do
+  campo de nome, que continua existindo como snapshot do momento da ação.
+  Os dois juntos: renomear o usuário não reescreve o histórico, e
+  homônimos deixam de ser ambíguos.
+  `UsuarioAutenticadoProvider.usuarioAtual()` devolve `Optional<Usuario>`;
+  sem autenticação no contexto, FK nula + nome `"sistema"` — o que agora
+  distingue ausência de autor de alguém realmente chamado "sistema"
+  (resolve parcialmente a fragilidade do fallback silencioso).
+  **Contrato do front preservado:** os campos de nome seguem iguais; os
+  ids entram como campos novos (`alteradoPorId`, `registradoPorId`,
+  `feitoPorId`).
+- **`Pedido.precoCentavos`** — snapshot do preço do serviço na criação,
+  exposto em `PedidoResponse` (o preço atual continua em
+  `servico.precoCentavos`). Corrigiu dois efeitos colaterais reais de
+  mudança de preço: `estaPago` comparava o total pago com o preço
+  **atual** (subir o preço ressuscitava um pedido quitado como pendente) e
+  o `faturamentoNominalCentavos` do dashboard recalculava pedidos antigos
+  pelo preço novo. Nada a backfillar — a tabela `pedido` do Supabase
+  estava vazia.
 
 ## ✅ Lote de pendências do backend (PENDENCIAS.md) — 2026-10-02
 
@@ -465,10 +471,9 @@ end. Resta:
    `POST/PUT/PATCH`; `/error` sem acesso público faz erro 500 aparecer
    como 401.
 6. **Rastreabilidade — o que ficou de fora** (ver a seção de 2026-10-07):
-   autor em `Cliente`/`Veiculo`/`ItemEstoque` (criação e edição); trocar
-   nome por FK pra `Usuario` nos campos de autoria; `precoCentavos` como
-   snapshot no `Pedido` (hoje o preço nominal de pedido antigo muda junto
-   com o serviço).
+   autor em `Cliente`/`Veiculo`/`ItemEstoque`/`ServicoItemEstoque`
+   (criação e edição) — o resto da autoria (pedido, pagamento, estoque,
+   serviço, usuário) já está com FK + snapshot do nome.
 
 ## Fundamentos de Java já estudados
 
