@@ -5,6 +5,7 @@ import br.com.santoandreplacas.apisantoandreplacas.pedido.Pedido;
 import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
 import br.com.santoandreplacas.apisantoandreplacas.servico.Servico;
 import br.com.santoandreplacas.apisantoandreplacas.servico.ServicoRepository;
+import br.com.santoandreplacas.apisantoandreplacas.usuario.UsuarioAutenticadoProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -18,17 +19,20 @@ public class EstoqueService {
     private final ServicoItemEstoqueRepository servicoItemEstoqueRepository;
     private final PedidoRepository pedidoRepository;
     private final ServicoRepository servicoRepository;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
 
     public EstoqueService(ItemEstoqueRepository itemEstoqueRepository,
                           MovimentacaoEstoqueRepository movimentacaoEstoqueRepository,
                           ServicoItemEstoqueRepository servicoItemEstoqueRepository,
                           PedidoRepository pedidoRepository,
-                          ServicoRepository servicoRepository) {
+                          ServicoRepository servicoRepository,
+                          UsuarioAutenticadoProvider usuarioAutenticadoProvider) {
         this.itemEstoqueRepository = itemEstoqueRepository;
         this.movimentacaoEstoqueRepository = movimentacaoEstoqueRepository;
         this.servicoItemEstoqueRepository = servicoItemEstoqueRepository;
         this.pedidoRepository = pedidoRepository;
         this.servicoRepository = servicoRepository;
+        this.usuarioAutenticadoProvider = usuarioAutenticadoProvider;
     }
 
     @Transactional(readOnly = true)
@@ -78,6 +82,13 @@ public class EstoqueService {
     }
 
     @Transactional(readOnly = true)
+    public List<MovimentacaoEstoque> listarMovimentacoes(Long itemEstoqueId) {
+        return itemEstoqueId == null
+                ? movimentacaoEstoqueRepository.findAllByOrderByCriadoEmDesc()
+                : movimentacaoEstoqueRepository.findByItemEstoqueIdOrderByCriadoEmDesc(itemEstoqueId);
+    }
+
+    @Transactional(readOnly = true)
     public List<ServicoItemEstoque> listarVinculosPorServico(Long servicoId) {
         return servicoItemEstoqueRepository.findByServicoId(servicoId);
     }
@@ -121,6 +132,9 @@ public class EstoqueService {
         movimentacao.setTipo(tipo);
         movimentacao.setQuantidade(quantidade);
         movimentacao.setPedido(pedido);
+        // Na baixa automática, o autor é quem moveu o pedido para EM_PROCESSAMENTO:
+        // o contexto de segurança da requisição ainda é o mesmo.
+        movimentacao.setRegistradoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
         movimentacao.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         return movimentacaoEstoqueRepository.save(movimentacao);
     }

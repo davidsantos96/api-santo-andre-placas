@@ -36,6 +36,13 @@ public class EstoqueController {
         return ItemEstoqueResponse.fromEntity(estoqueService.criarItem(item));
     }
 
+    @GetMapping("/movimentacoes")
+    public List<MovimentacaoEstoqueResponse> listarMovimentacoes(@RequestParam(required = false) Long itemEstoqueId) {
+        return estoqueService.listarMovimentacoes(itemEstoqueId).stream()
+                .map(MovimentacaoEstoqueResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @PostMapping("/movimentacoes")
     public MovimentacaoEstoqueResponse registrarMovimentacao(@RequestBody NovaMovimentacaoRequest request) {
         return MovimentacaoEstoqueResponse.fromEntity(estoqueService.registrarMovimentacao(request));

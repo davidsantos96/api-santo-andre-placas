@@ -25,7 +25,17 @@ public class MovimentacaoEstoque {
     @JoinColumn(name = "pedido_id")
     private Pedido pedido; // nullable — só preenchido quando a movimentação vem de um pedido
 
+    private String registradoPor;
+
     private LocalDateTime criadoEm;
+
+    public String getRegistradoPor() {
+        return registradoPor;
+    }
+
+    public void setRegistradoPor(String registradoPor) {
+        this.registradoPor = registradoPor;
+    }
 
     public Long getId() {
         return id;

@@ -9,6 +9,7 @@ public record MovimentacaoEstoqueResponse(
         TipoMovimentacao tipo,
         int quantidade,
         Long pedidoId,
+        String registradoPor,
         LocalDateTime criadoEm
 ) {
     public static MovimentacaoEstoqueResponse fromEntity(MovimentacaoEstoque movimentacao) {
@@ -19,6 +20,7 @@ public record MovimentacaoEstoqueResponse(
                 movimentacao.getTipo(),
                 movimentacao.getQuantidade(),
                 movimentacao.getPedido() != null ? movimentacao.getPedido().getId() : null,
+                movimentacao.getRegistradoPor(),
                 movimentacao.getCriadoEm()
         );
     }
