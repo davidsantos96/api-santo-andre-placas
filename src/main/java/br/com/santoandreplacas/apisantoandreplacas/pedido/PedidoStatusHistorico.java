@@ -1,5 +1,6 @@
 package br.com.santoandreplacas.apisantoandreplacas.pedido;
 
+import br.com.santoandreplacas.apisantoandreplacas.usuario.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -21,7 +22,11 @@ public class PedidoStatusHistorico {
     @Enumerated(EnumType.STRING)
     private StatusPedido statusNovo;
 
-    private String alteradoPor; // temporário: nome/identificação, até termos Usuario como entidade
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alterado_por_usuario_id")
+    private Usuario alteradoPorUsuario; // nulo quando não há usuário autenticado no contexto
+
+    private String alteradoPor; // snapshot do nome na hora da ação (ver UsuarioAutenticadoProvider)
 
     private LocalDateTime alteradoEm;
 
@@ -51,6 +56,14 @@ public class PedidoStatusHistorico {
 
     public void setStatusNovo(StatusPedido statusNovo) {
         this.statusNovo = statusNovo;
+    }
+
+    public Usuario getAlteradoPorUsuario() {
+        return alteradoPorUsuario;
+    }
+
+    public void setAlteradoPorUsuario(Usuario alteradoPorUsuario) {
+        this.alteradoPorUsuario = alteradoPorUsuario;
     }
 
     public String getAlteradoPor() {

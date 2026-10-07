@@ -49,6 +49,7 @@ public class AuditoriaService {
         registro.setCampo(campo);
         registro.setValorAnterior(valorAnterior);
         registro.setValorNovo(valorNovo);
+        registro.setFeitoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
         registro.setFeitoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
         registro.setFeitoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         registroAuditoriaRepository.save(registro);

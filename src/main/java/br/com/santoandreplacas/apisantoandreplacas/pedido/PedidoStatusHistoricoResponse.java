@@ -7,6 +7,7 @@ public record PedidoStatusHistoricoResponse(
         StatusPedido statusAnterior,
         StatusPedido statusNovo,
         String alteradoPor,
+        Long alteradoPorId,
         LocalDateTime alteradoEm
 ) {
     public static PedidoStatusHistoricoResponse fromEntity(PedidoStatusHistorico historico) {
@@ -15,6 +16,7 @@ public record PedidoStatusHistoricoResponse(
                 historico.getStatusAnterior(),
                 historico.getStatusNovo(),
                 historico.getAlteradoPor(),
+                historico.getAlteradoPorUsuario() != null ? historico.getAlteradoPorUsuario().getId() : null,
                 historico.getAlteradoEm()
         );
     }

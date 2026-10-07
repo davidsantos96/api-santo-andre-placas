@@ -1,5 +1,6 @@
 package br.com.santoandreplacas.apisantoandreplacas.auditoria;
 
+import br.com.santoandreplacas.apisantoandreplacas.usuario.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -34,7 +35,11 @@ public class RegistroAuditoria {
     private String valorAnterior;
     private String valorNovo;
 
-    private String feitoPor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "feito_por_usuario_id")
+    private Usuario feitoPorUsuario; // nulo quando não há usuário autenticado no contexto
+
+    private String feitoPor; // snapshot do nome na hora da ação
     private LocalDateTime feitoEm;
 
     public Long getId() {
@@ -95,6 +100,14 @@ public class RegistroAuditoria {
 
     public void setValorNovo(String valorNovo) {
         this.valorNovo = valorNovo;
+    }
+
+    public Usuario getFeitoPorUsuario() {
+        return feitoPorUsuario;
+    }
+
+    public void setFeitoPorUsuario(Usuario feitoPorUsuario) {
+        this.feitoPorUsuario = feitoPorUsuario;
     }
 
     public String getFeitoPor() {

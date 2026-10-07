@@ -12,7 +12,8 @@ public record PagamentoListagemResponse(
         FormaPagamento formaPagamento,
         long valorCentavos,
         LocalDateTime pagoEm,
-        String registradoPor
+        String registradoPor,
+        Long registradoPorId
 ) {
     public static PagamentoListagemResponse fromEntity(Pagamento pagamento) {
         Pedido pedido = pagamento.getPedido();
@@ -25,7 +26,8 @@ public record PagamentoListagemResponse(
                 pagamento.getFormaPagamento(),
                 pagamento.getValorCentavos(),
                 pagamento.getPagoEm(),
-                pagamento.getRegistradoPor()
+                pagamento.getRegistradoPor(),
+                pagamento.getRegistradoPorUsuario() != null ? pagamento.getRegistradoPorUsuario().getId() : null
         );
     }
 }

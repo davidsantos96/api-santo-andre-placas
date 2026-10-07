@@ -38,6 +38,7 @@ public class PagamentoService {
         pagamento.setFormaPagamento(request.formaPagamento());
         pagamento.setStatus(StatusPagamento.PAGO);
         pagamento.setPagoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
+        pagamento.setRegistradoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
         pagamento.setRegistradoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
 
         return pagamentoRepository.save(pagamento);

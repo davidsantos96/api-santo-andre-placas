@@ -12,6 +12,7 @@ public record RegistroAuditoriaResponse(
         String valorAnterior,
         String valorNovo,
         String feitoPor,
+        Long feitoPorId,
         LocalDateTime feitoEm
 ) {
     public static RegistroAuditoriaResponse fromEntity(RegistroAuditoria registro) {
@@ -25,6 +26,7 @@ public record RegistroAuditoriaResponse(
                 registro.getValorAnterior(),
                 registro.getValorNovo(),
                 registro.getFeitoPor(),
+                registro.getFeitoPorUsuario() != null ? registro.getFeitoPorUsuario().getId() : null,
                 registro.getFeitoEm()
         );
     }

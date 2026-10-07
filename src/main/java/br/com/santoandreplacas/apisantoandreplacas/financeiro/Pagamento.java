@@ -1,6 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.financeiro;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.Pedido;
+import br.com.santoandreplacas.apisantoandreplacas.usuario.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -26,7 +27,11 @@ public class Pagamento {
 
     private LocalDateTime pagoEm;
 
-    private String registradoPor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "registrado_por_usuario_id")
+    private Usuario registradoPorUsuario; // nulo quando não há usuário autenticado no contexto
+
+    private String registradoPor; // snapshot do nome na hora da ação
 
     public Long getId() {
         return id;
@@ -79,6 +84,14 @@ public class Pagamento {
 
     public void setPagoEm(LocalDateTime pagoEm) {
         this.pagoEm = pagoEm;
+    }
+
+    public Usuario getRegistradoPorUsuario() {
+        return registradoPorUsuario;
+    }
+
+    public void setRegistradoPorUsuario(Usuario registradoPorUsuario) {
+        this.registradoPorUsuario = registradoPorUsuario;
     }
 
     public String getRegistradoPor() {

@@ -1,6 +1,7 @@
 package br.com.santoandreplacas.apisantoandreplacas.estoque;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.Pedido;
+import br.com.santoandreplacas.apisantoandreplacas.usuario.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -25,9 +26,21 @@ public class MovimentacaoEstoque {
     @JoinColumn(name = "pedido_id")
     private Pedido pedido; // nullable — só preenchido quando a movimentação vem de um pedido
 
-    private String registradoPor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "registrado_por_usuario_id")
+    private Usuario registradoPorUsuario; // nulo quando não há usuário autenticado no contexto
+
+    private String registradoPor; // snapshot do nome na hora da ação
 
     private LocalDateTime criadoEm;
+
+    public Usuario getRegistradoPorUsuario() {
+        return registradoPorUsuario;
+    }
+
+    public void setRegistradoPorUsuario(Usuario registradoPorUsuario) {
+        this.registradoPorUsuario = registradoPorUsuario;
+    }
 
     public String getRegistradoPor() {
         return registradoPor;

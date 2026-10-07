@@ -3,6 +3,7 @@ package br.com.santoandreplacas.apisantoandreplacas.usuario;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import java.util.Optional;
 
 /**
  * Resolve o Usuario autenticado da requisição atual, pra registrar quem fez
@@ -19,17 +20,22 @@ public class UsuarioAutenticadoProvider {
     }
 
     /**
-     * Nome do usuário autenticado, ou "sistema" se não houver autenticação
-     * no contexto atual (ex.: chamada feita fora de uma requisição HTTP).
+     * Usuário autenticado da requisição atual, ou vazio quando não há
+     * autenticação no contexto (ex.: chamada feita fora de uma requisição HTTP,
+     * como o seeder na subida). Nesse caso a autoria fica com FK nula e o nome
+     * "sistema" — o que distingue a ausência de autor de um usuário real.
      */
-    public String nomeUsuarioAtual() {
+    public Optional<Usuario> usuarioAtual() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            return "sistema";
+            return Optional.empty();
         }
 
-        return usuarioRepository.findByEmail(authentication.getName())
-                .map(Usuario::getNome)
-                .orElse("sistema");
+        return usuarioRepository.findByEmail(authentication.getName());
+    }
+
+    /** Nome do usuário autenticado, ou "sistema". Guardado como snapshot junto da FK. */
+    public String nomeUsuarioAtual() {
+        return usuarioAtual().map(Usuario::getNome).orElse("sistema");
     }
 }

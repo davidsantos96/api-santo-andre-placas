@@ -134,6 +134,7 @@ public class EstoqueService {
         movimentacao.setPedido(pedido);
         // Na baixa automática, o autor é quem moveu o pedido para EM_PROCESSAMENTO:
         // o contexto de segurança da requisição ainda é o mesmo.
+        movimentacao.setRegistradoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
         movimentacao.setRegistradoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
         movimentacao.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         return movimentacaoEstoqueRepository.save(movimentacao);

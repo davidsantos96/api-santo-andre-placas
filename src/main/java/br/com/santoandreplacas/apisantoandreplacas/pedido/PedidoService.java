@@ -154,6 +154,7 @@ public class PedidoService {
         historico.setPedido(pedido);
         historico.setStatusAnterior(statusAnterior);
         historico.setStatusNovo(statusNovo);
+        historico.setAlteradoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
         historico.setAlteradoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
         historico.setAlteradoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         historicoRepository.save(historico);

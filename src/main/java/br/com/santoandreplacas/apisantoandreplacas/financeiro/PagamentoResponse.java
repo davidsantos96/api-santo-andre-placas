@@ -9,7 +9,8 @@ public record PagamentoResponse(
         FormaPagamento formaPagamento,
         StatusPagamento status,
         LocalDateTime pagoEm,
-        String registradoPor
+        String registradoPor,
+        Long registradoPorId
 ) {
     public static PagamentoResponse fromEntity(Pagamento pagamento) {
         return new PagamentoResponse(
@@ -19,7 +20,8 @@ public record PagamentoResponse(
                 pagamento.getFormaPagamento(),
                 pagamento.getStatus(),
                 pagamento.getPagoEm(),
-                pagamento.getRegistradoPor()
+                pagamento.getRegistradoPor(),
+                pagamento.getRegistradoPorUsuario() != null ? pagamento.getRegistradoPorUsuario().getId() : null
         );
     }
 }
