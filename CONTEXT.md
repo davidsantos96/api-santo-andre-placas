@@ -226,6 +226,7 @@ Mapa do que é rastreável hoje:
 | Criar/alterar/ativar/desativar serviço | `RegistroAuditoria` |
 | Criar/alterar/ativar/desativar usuário e resetar senha | `RegistroAuditoria` |
 | Criar/editar cliente e veículo | `criadoPor*` / `atualizadoPor*` na própria linha |
+| Criar item de estoque e vínculo serviço↔item | `criadoPor*` na própria linha (só criação: não há endpoint de edição) |
 | Último login | `Usuario.ultimoAcessoEm` (só o último, sobrescreve) |
 
 O que foi feito nesta rodada:
@@ -255,8 +256,10 @@ O que foi feito nesta rodada:
   `@Transactional` — sem isso a linha de auditoria poderia sobreviver a um
   rollback da alteração.
 
-**Ainda sem autor:** `ItemEstoque` (criação/edição) e `ServicoItemEstoque`
-(vínculo serviço↔item).
+**Cobertura:** toda escrita de domínio exposta pela API hoje tem autor.
+`ItemEstoque` e `ServicoItemEstoque` só têm autoria de criação porque não
+existe endpoint de edição/remoção pra eles — se um `PUT` aparecer, os
+campos `atualizadoPor*` entram junto.
 
 ### FK de autoria + snapshot do preço — 2026-10-07 (mesma rodada, depois)
 
@@ -480,10 +483,11 @@ end. Resta:
    (P17); `Cliente`/`Servico` ainda devolvem a entidade crua em
    `POST/PUT/PATCH`; `/error` sem acesso público faz erro 500 aparecer
    como 401.
-6. **Rastreabilidade — o que ficou de fora** (ver a seção de 2026-10-07):
-   autor em `ItemEstoque` e `ServicoItemEstoque`. Todo o resto (pedido,
-   pagamento, movimentação de estoque, serviço, usuário, cliente,
-   veículo) já tem autoria com FK + snapshot do nome.
+6. **Rastreabilidade: concluída** (ver a seção de 2026-10-07). Toda escrita
+   de domínio exposta pela API grava autor com FK + snapshot do nome.
+   Sobra só o fallback silencioso `"sistema"` do
+   `UsuarioAutenticadoProvider`, que mascara ausência de autenticação em
+   vez de denunciar — hoje distinguível pela FK nula.
 
 ## Fundamentos de Java já estudados
 
