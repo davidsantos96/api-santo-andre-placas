@@ -9,6 +9,9 @@ public record PedidoResponse(
         Long id,
         StatusPedido status,
         String origem,
+        // Preço cobrado neste pedido (snapshot). O preço atual do serviço, que pode
+        // ter mudado desde então, vem em servico.precoCentavos.
+        long precoCentavos,
         boolean pago,
         ClienteResponse cliente,
         VeiculoResponse veiculo,
@@ -21,6 +24,7 @@ public record PedidoResponse(
                 pedido.getId(),
                 pedido.getStatus(),
                 pedido.getOrigem(),
+                pedido.getPrecoCentavos(),
                 pago,
                 ClienteResponse.fromEntity(pedido.getCliente()),
                 VeiculoResponse.fromEntity(pedido.getVeiculo()),

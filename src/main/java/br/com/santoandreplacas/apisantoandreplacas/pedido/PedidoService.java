@@ -60,7 +60,7 @@ public class PedidoService {
     @Transactional(readOnly = true)
     public boolean estaPago(Pedido pedido) {
         long totalPago = pagamentoRepository.somarValorPorPedidoEStatus(pedido.getId(), StatusPagamento.PAGO);
-        return totalPago >= pedido.getServico().getPrecoCentavos();
+        return totalPago >= pedido.getPrecoCentavos();
     }
 
     @Transactional(readOnly = true)
@@ -102,6 +102,7 @@ public class PedidoService {
 
     public Pedido criar(Pedido pedido) {
         pedido.setStatus(StatusPedido.RECEBIDO);
+        pedido.setPrecoCentavos(pedido.getServico().getPrecoCentavos());
         pedido.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         pedido.setAtualizadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 

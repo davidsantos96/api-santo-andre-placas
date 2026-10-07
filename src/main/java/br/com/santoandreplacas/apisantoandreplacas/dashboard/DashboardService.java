@@ -104,7 +104,7 @@ public class DashboardService {
                 .map(lista -> {
                     Pedido exemplo = lista.get(0);
                     long faturamentoNominal = lista.stream()
-                            .mapToLong(p -> p.getServico().getPrecoCentavos())
+                            .mapToLong(Pedido::getPrecoCentavos)
                             .sum();
                     return new ServicoMaisVendidoResponse(
                             exemplo.getServico().getId(),

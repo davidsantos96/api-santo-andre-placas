@@ -29,6 +29,11 @@ public class Pedido {
     @Enumerated(EnumType.STRING)
     private StatusPedido status;
 
+    // Snapshot do preço do serviço no momento em que o pedido foi criado: mudar o
+    // preço do serviço depois não pode alterar o valor de pedidos já feitos (nem
+    // fazer um pedido quitado voltar a aparecer como pendente).
+    private long precoCentavos;
+
     private String origem; // WHATSAPP | BALCAO | TELEFONE
     private String origemLead; // nullable — preparado para integração futura (spec, seção 2)
 
@@ -70,6 +75,14 @@ public class Pedido {
             throw new IllegalArgumentException("Pedido precisa estar vinculado a um serviço.");
         }
         this.servico = servico;
+    }
+
+    public long getPrecoCentavos() {
+        return precoCentavos;
+    }
+
+    public void setPrecoCentavos(long precoCentavos) {
+        this.precoCentavos = precoCentavos;
     }
 
     public StatusPedido getStatus() {
