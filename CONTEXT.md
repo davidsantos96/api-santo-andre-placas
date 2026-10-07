@@ -225,6 +225,7 @@ Mapa do que é rastreável hoje:
 | Movimentar estoque (manual e baixa automática) | `MovimentacaoEstoque.registradoPor` |
 | Criar/alterar/ativar/desativar serviço | `RegistroAuditoria` |
 | Criar/alterar/ativar/desativar usuário e resetar senha | `RegistroAuditoria` |
+| Criar/editar cliente e veículo | `criadoPor*` / `atualizadoPor*` na própria linha |
 | Último login | `Usuario.ultimoAcessoEm` (só o último, sobrescreve) |
 
 O que foi feito nesta rodada:
@@ -254,9 +255,8 @@ O que foi feito nesta rodada:
   `@Transactional` — sem isso a linha de auditoria poderia sobreviver a um
   rollback da alteração.
 
-**Ainda sem autor:** `Cliente` e `Veiculo` (criação e edição — ambos têm
-só `criadoEm`, e o `PUT` não deixa rastro) e `ItemEstoque`
-(criação/edição). `ServicoItemEstoque` (vínculo) também não.
+**Ainda sem autor:** `ItemEstoque` (criação/edição) e `ServicoItemEstoque`
+(vínculo serviço↔item).
 
 ### FK de autoria + snapshot do preço — 2026-10-07 (mesma rodada, depois)
 
@@ -282,6 +282,16 @@ só `criadoEm`, e o `PUT` não deixa rastro) e `ItemEstoque`
   o `faturamentoNominalCentavos` do dashboard recalculava pedidos antigos
   pelo preço novo. Nada a backfillar — a tabela `pedido` do Supabase
   estava vazia.
+- **Cliente e Veículo** — `criadoPor`/`criadoPorUsuario` e
+  `atualizadoPor`/`atualizadoPorUsuario`/`atualizadoEm` (antes só havia
+  `criadoEm`, sem autor, e o `PUT` não deixava rastro nenhum). Expostos em
+  `ClienteResponse`/`VeiculoResponse`. `POST /pedidos/completo` criava os
+  dois direto pelo repositório e ficaria sem autor; passou a delegar a
+  `ClienteService.criar`/`VeiculoService.criar`, o que de quebra tirou a
+  duplicação da validação de duplicidade e do timestamp.
+  Se um dia for preciso saber **o que** mudou nesses dois (e não só quem),
+  o caminho é estender `EntidadeAuditada` com `CLIENTE`/`VEICULO` e
+  chamar o `AuditoriaService`, como serviço e usuário já fazem.
 
 ## ✅ Lote de pendências do backend (PENDENCIAS.md) — 2026-10-02
 
@@ -471,9 +481,9 @@ end. Resta:
    `POST/PUT/PATCH`; `/error` sem acesso público faz erro 500 aparecer
    como 401.
 6. **Rastreabilidade — o que ficou de fora** (ver a seção de 2026-10-07):
-   autor em `Cliente`/`Veiculo`/`ItemEstoque`/`ServicoItemEstoque`
-   (criação e edição) — o resto da autoria (pedido, pagamento, estoque,
-   serviço, usuário) já está com FK + snapshot do nome.
+   autor em `ItemEstoque` e `ServicoItemEstoque`. Todo o resto (pedido,
+   pagamento, movimentação de estoque, serviço, usuário, cliente,
+   veículo) já tem autoria com FK + snapshot do nome.
 
 ## Fundamentos de Java já estudados
 
