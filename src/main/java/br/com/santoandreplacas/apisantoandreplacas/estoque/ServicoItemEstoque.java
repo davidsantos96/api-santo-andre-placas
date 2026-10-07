@@ -1,7 +1,9 @@
 package br.com.santoandreplacas.apisantoandreplacas.estoque;
 
 import br.com.santoandreplacas.apisantoandreplacas.servico.Servico;
+import br.com.santoandreplacas.apisantoandreplacas.usuario.Usuario;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 /**
  * Vínculo entre um Servico e os ItemEstoque que ele consome — não faz parte
@@ -27,6 +29,39 @@ public class ServicoItemEstoque {
     private ItemEstoque itemEstoque;
 
     private int quantidadeNecessaria;
+
+    // Só autoria de criação: não existe endpoint de edição nem de remoção do vínculo.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_usuario_id")
+    private Usuario criadoPorUsuario;
+
+    private String criadoPor; // snapshot do nome na hora da ação
+
+    private LocalDateTime criadoEm;
+
+    public Usuario getCriadoPorUsuario() {
+        return criadoPorUsuario;
+    }
+
+    public void setCriadoPorUsuario(Usuario criadoPorUsuario) {
+        this.criadoPorUsuario = criadoPorUsuario;
+    }
+
+    public String getCriadoPor() {
+        return criadoPor;
+    }
+
+    public void setCriadoPor(String criadoPor) {
+        this.criadoPor = criadoPor;
+    }
+
+    public LocalDateTime getCriadoEm() {
+        return criadoEm;
+    }
+
+    public void setCriadoEm(LocalDateTime criadoEm) {
+        this.criadoEm = criadoEm;
+    }
 
     public Long getId() {
         return id;

@@ -46,6 +46,9 @@ public class EstoqueService {
     }
 
     public ItemEstoque criarItem(ItemEstoque item) {
+        item.setCriadoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
+        item.setCriadoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
+        item.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         return itemEstoqueRepository.save(item);
     }
 
@@ -103,6 +106,9 @@ public class EstoqueService {
         vinculo.setServico(servico);
         vinculo.setItemEstoque(item);
         vinculo.setQuantidadeNecessaria(request.quantidadeNecessaria());
+        vinculo.setCriadoPorUsuario(usuarioAutenticadoProvider.usuarioAtual().orElse(null));
+        vinculo.setCriadoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
+        vinculo.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
         return servicoItemEstoqueRepository.save(vinculo);
     }

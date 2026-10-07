@@ -1,10 +1,15 @@
 package br.com.santoandreplacas.apisantoandreplacas.estoque;
 
+import br.com.santoandreplacas.apisantoandreplacas.usuario.Usuario;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "item_estoque")
@@ -20,8 +25,42 @@ public class ItemEstoque {
     private int quantidade;
     private int quantidadeMinima;
 
+    // Só autoria de criação: não existe endpoint de edição do item. Mudança de
+    // quantidade tem rastro próprio em MovimentacaoEstoque.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_usuario_id")
+    private Usuario criadoPorUsuario;
+
+    private String criadoPor; // snapshot do nome na hora da ação
+
+    private LocalDateTime criadoEm;
+
     public Long getId() {
         return id;
+    }
+
+    public Usuario getCriadoPorUsuario() {
+        return criadoPorUsuario;
+    }
+
+    public void setCriadoPorUsuario(Usuario criadoPorUsuario) {
+        this.criadoPorUsuario = criadoPorUsuario;
+    }
+
+    public String getCriadoPor() {
+        return criadoPor;
+    }
+
+    public void setCriadoPor(String criadoPor) {
+        this.criadoPor = criadoPor;
+    }
+
+    public LocalDateTime getCriadoEm() {
+        return criadoEm;
+    }
+
+    public void setCriadoEm(LocalDateTime criadoEm) {
+        this.criadoEm = criadoEm;
     }
 
     public String getNome() {
