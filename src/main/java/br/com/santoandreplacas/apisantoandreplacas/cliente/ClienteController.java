@@ -29,12 +29,12 @@ public class ClienteController {
     }
 
     @PostMapping
-    public Cliente criar(@RequestBody Cliente cliente) {
-        return clienteService.criar(cliente);
+    public ClienteResponse criar(@RequestBody Cliente cliente) {
+        return clienteService.toResponse(clienteService.criar(cliente));
     }
 
     @PutMapping("/{id}")
-    public Cliente atualizar(@PathVariable Long id, @RequestBody Cliente cliente) {
-        return clienteService.atualizar(id, cliente);
+    public ClienteResponse atualizar(@PathVariable Long id, @RequestBody Cliente cliente) {
+        return clienteService.toResponse(clienteService.atualizar(id, cliente));
     }
 }

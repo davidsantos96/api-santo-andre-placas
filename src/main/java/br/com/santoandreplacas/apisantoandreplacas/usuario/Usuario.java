@@ -1,5 +1,6 @@
 package br.com.santoandreplacas.apisantoandreplacas.usuario;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -16,6 +17,10 @@ public class Usuario {
     @Column(unique = true, nullable = false)
     private String email;
 
+    // Nunca serializar o hash: se alguma rota devolver a entidade (direto ou por
+    // um relacionamento, como criadoPorUsuario em Cliente), o hash iria no corpo.
+    // Já aconteceu — ver B19 no CONTEXT.md. Não afeta a leitura em Java.
+    @JsonIgnore
     private String senhaHash;
 
     @Enumerated(EnumType.STRING)
