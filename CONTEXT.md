@@ -213,6 +213,70 @@ descartável, removido depois de confirmar):
    continua existindo internamente, reaproveitado por `criarSimples` e
    por `criarPedidoCompleto`.
 
+## ✅ Rastreabilidade (quem fez o quê) — 2026-10-07
+
+Mapa do que é rastreável hoje:
+
+| Ação | Onde fica o autor |
+|---|---|
+| Criar pedido | `PedidoStatusHistorico` (linha `null → RECEBIDO`) |
+| Mudar status (inclui entrega/cancelamento) | `PedidoStatusHistorico.alteradoPor` |
+| Registrar pagamento | `Pagamento.registradoPor` |
+| Movimentar estoque (manual e baixa automática) | `MovimentacaoEstoque.registradoPor` |
+| Criar/alterar/ativar/desativar serviço | `RegistroAuditoria` |
+| Criar/alterar/ativar/desativar usuário e resetar senha | `RegistroAuditoria` |
+| Último login | `Usuario.ultimoAcessoEm` (só o último, sobrescreve) |
+
+O que foi feito nesta rodada:
+
+- **Estoque** — `MovimentacaoEstoque.registradoPor`. Na baixa automática o
+  autor é quem moveu o pedido pra `EM_PROCESSAMENTO` (mesmo contexto de
+  segurança). Faltava também **como ler** esse histórico: novo
+  `GET /estoque/movimentacoes?itemEstoqueId=`, mais recente primeiro.
+- **Trilha genérica** (pacote `auditoria`) — `RegistroAuditoria`
+  (`entidade`, `entidadeId`, `entidadeDescricao`, `acao`, `campo`,
+  `valorAnterior`, `valorNovo`, `feitoPor`, `feitoEm`) +
+  `AuditoriaService` + `GET /api/auditoria?entidade=&entidadeId=`
+  (GERENTE+). Uma linha por campo alterado, e só quando o valor muda de
+  fato. `entidadeDescricao` é snapshot (nome do serviço / e-mail do
+  usuário na hora da ação), então sobrevive a renomeação depois.
+  Escolhido um registro genérico em vez de uma tabela por entidade
+  porque atendeu serviço e usuário de uma vez e estende fácil pra
+  cliente/veículo. Pedido, pagamento e estoque **não** passam por aqui —
+  já têm histórico/autor na própria linha.
+- **Serviço** — audita criação, alteração (`nome`, `descricao`,
+  `precoCentavos`, `categoria`) e ativação/desativação. Antes, mudança de
+  preço não deixava rastro nenhum.
+- **Usuário** — audita criação, alteração de `nome`/`email`/`papel`,
+  ativação/desativação e `RESET_SENHA`. O reset registra **só que
+  ocorreu**; nunca senha nem hash (tem assertiva de teste pra isso).
+- Métodos de escrita de `ServicoService`/`UsuarioService` viraram
+  `@Transactional` — sem isso a linha de auditoria poderia sobreviver a um
+  rollback da alteração.
+
+**Ainda sem autor:** `Cliente` e `Veiculo` (criação e edição — ambos têm
+só `criadoEm`, e o `PUT` não deixa rastro) e `ItemEstoque`
+(criação/edição). `ServicoItemEstoque` (vínculo) também não.
+
+**Duas fragilidades conhecidas, de propósito:**
+1. `alteradoPor`/`registradoPor`/`feitoPor` guardam o **nome** (ou e-mail)
+   como texto, não FK pra `Usuario`. Renomear o usuário não reescreve o
+   histórico (o que é bom), mas dois usuários de mesmo nome ficam
+   ambíguos. Migrar pra FK + snapshot do nome é o próximo passo combinado,
+   "se valer".
+2. `UsuarioAutenticadoProvider` cai em `"sistema"` quando não há
+   autenticação no contexto. Numa requisição HTTP autenticada isso não
+   deveria acontecer, então hoje mascara bug em vez de denunciar.
+
+**Nota não resolvida (fora do escopo desta rodada):** `Pedido` não guarda
+snapshot do preço do serviço — aponta pra `Servico` por FK e
+`PedidoResponse` mostra o preço **atual**. Mudar o preço de um serviço
+muda retroativamente o valor nominal de pedidos antigos. Os pagamentos
+(`Pagamento.valorCentavos`) são snapshot, então o caixa não é afetado; o
+que distorce é o valor nominal do pedido e o `faturamentoNominalCentavos`
+do dashboard. Com a auditoria de preço dá pra reconstruir, mas o certo
+seria `precoCentavos` no próprio `Pedido`.
+
 ## ✅ Lote de pendências do backend (PENDENCIAS.md) — 2026-10-02
 
 Fechado a partir do `PENDENCIAS.md` do front, verificado com MockMvc
@@ -400,6 +464,11 @@ end. Resta:
    (P17); `Cliente`/`Servico` ainda devolvem a entidade crua em
    `POST/PUT/PATCH`; `/error` sem acesso público faz erro 500 aparecer
    como 401.
+6. **Rastreabilidade — o que ficou de fora** (ver a seção de 2026-10-07):
+   autor em `Cliente`/`Veiculo`/`ItemEstoque` (criação e edição); trocar
+   nome por FK pra `Usuario` nos campos de autoria; `precoCentavos` como
+   snapshot no `Pedido` (hoje o preço nominal de pedido antigo muda junto
+   com o serviço).
 
 ## Fundamentos de Java já estudados
 
