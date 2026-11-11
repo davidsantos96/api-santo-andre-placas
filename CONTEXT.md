@@ -469,8 +469,10 @@ depois de confirmar, 6 cenários, todos verdes):
 
 ## ✅ Supabase (Postgres real) conectado e seed do admin — 2026-09-30
 
-- Projeto Supabase criado (`db.ksmxrzmayzahlyebbdaq.supabase.co`), só para
-  testes — nenhum usuário/dado de produção ainda.
+- Projeto Supabase só para testes — nenhum usuário/dado de produção ainda.
+  **Trocado em 2026-11-11** por `db.qvnzfmitdufabrlqutow.supabase.co` (o antigo
+  `ksmxrzmayzahlyebbdaq` ficou pausado por inatividade e foi substituído; o novo
+  fica em região mais próxima, por causa de lentidão). A senha mudou junto.
 - Novo profile Spring `supabase` (`application-supabase.properties`):
   datasource Postgres via `${SUPABASE_DB_HOST}`/`${SUPABASE_DB_PASSWORD}`
   (variáveis de ambiente, nunca hardcoded/commitado). `ddl-auto=update`
