@@ -2,7 +2,7 @@
 
 > Este arquivo existe para dar contexto rápido ao Claude Code (ou a quem
 > retomar o projeto) sem precisar reconstruir o histórico de decisões a
-> partir do zero. Leia junto com `Spec — Santo André Placas.md`, que é a
+> partir do zero. Leia junto com `docs/spec.md`, que é a
 > fonte de verdade sobre domínio, entidades e endpoints planejados.
 
 ## Stack e estado atual
@@ -212,6 +212,67 @@ descartável, removido depois de confirmar):
    (`400`), não mais erro de FK (`500`). `PedidoService.criar(Pedido)`
    continua existindo internamente, reaproveitado por `criarSimples` e
    por `criarPedidoCompleto`.
+
+## ✅ Ajustes para o teste final — 2026-11-11
+
+Revisão dos dois repositórios (API e front) antes do teste final. Ponto de
+partida: a suíte e2e do front (43 roteiros Playwright contra a API real)
+já passava inteira; o que entrou aqui é o que faltava para o sistema ser
+usável sem Swagger e sem surpresas.
+
+- **Erro que não é de autenticação não sai mais como `401`.** Era o item
+  "`/error` sem acesso público" da lista de pendências, e na prática era
+  mais grave do que parecia: parâmetro inválido (`/pedidos?status=XYZ`),
+  rota inexistente, método errado e qualquer `500` saíam como `401`, e o
+  front, ao ver `401`, abre o modal de "sessão expirada". Duas camadas:
+  `GlobalExceptionHandler` ganhou handlers para tipo de parâmetro,
+  parâmetro ausente, rota inexistente (`404`), método não aceito (`405`),
+  violação de restrição do banco (`400`, sem expor a mensagem do banco) e
+  um genérico (`500` com stack trace só no log); e o `SecurityConfig`
+  libera o dispatch `ERROR`. Todos respondem `{"mensagem": ...}`.
+  **Cuidado ao mexer:** o handler de `AccessDeniedException` precisa
+  continuar existindo — a negação do `@PreAuthorize` acontece dentro do
+  controller e, sem ele, o handler genérico transformaria "sem permissão"
+  (`403`) em `500`.
+- **Vínculo serviço↔item de estoque utilizável.** O vínculo só podia ser
+  criado pelo Swagger e não podia ser removido, então a baixa automática
+  (regra central da seção 4 da spec) não era configurável pelo sistema.
+  Novo `DELETE /api/estoque/vinculos/{id}` (`ADMIN`/`GERENTE`); o `POST`
+  recusa o mesmo item duas vezes no mesmo serviço (daria baixa em dobro).
+  Inclusão e remoção entram na auditoria do serviço como alteração do
+  campo `itemEstoque` (`null → "Lacre × 2"` / `"Lacre × 2" → null`) — é
+  onde fica o autor da remoção, já que a linha do vínculo some. O front
+  ganhou a tela (botão "Itens" na coluna "Baixa de estoque" de Serviços).
+- **B17** — busca de clientes só compara por dígitos quando o termo não
+  tem letra ("Cliente E2E" não casa mais com todo telefone que tem um 2).
+- **B18** — e-mail de usuário sem diferenciar maiúsculas
+  (`findByEmailIgnoreCase` no cadastro, na edição, no login e no filtro
+  JWT). O e-mail é guardado como foi digitado, só sem espaços nas pontas.
+- **Usuários** — senha com mínimo de 6 caracteres na criação e no reset
+  (antes só o front exigia); nome, e-mail e papel obrigatórios com
+  mensagem clara; ninguém desativa o próprio usuário; o único `ADMIN`
+  ativo não pode se rebaixar. (Desativar o "último admin" não precisa de
+  regra própria: só `ADMIN` chama a rota, e quem desativa outro continua
+  ativo.)
+- **Serviço** — `POST`/`PUT`/`PATCH /servicos` devolvem `ServicoResponse`
+  (sai `codigoExterno`, entra `pedidosNoMes`). Era a última rota devolvendo
+  entidade crua, o padrão latente do B19.
+- **Pedido** — `POST /pedidos` virou `@Transactional` (pedido + primeira
+  linha do histórico entram juntos) e recusa com `400`: campo ausente,
+  serviço inativo e veículo que não pertence ao cliente informado. O
+  serviço inativo também é recusado em `/pedidos/completo`.
+
+**Testes permanentes novos** (junto do `RespostasNaoVazamCredenciaisTest`):
+`FluxoPrincipalTest` percorre cadastro → pedido → produção com baixa de
+estoque → pagamento em duas parcelas → entrega → caixa; e
+`ErrosEProtecoesTest` cobre os itens acima. `ApiDeTeste` é o apoio dos
+dois (login + chamadas JSON pelo MockMvc). Os três compartilham o mesmo
+H2 em memória, então cada teste usa nomes/placas próprios e as somas do
+caixa são conferidas como "pelo menos".
+
+**Limite do MockMvc:** ele não reproduz o forward para `/error`, então a
+correção do `401` foi conferida também com a API no ar (curl e a suíte
+e2e do front).
 
 ## 🔴 B19 — vazamento do hash de senha em POST/PUT /clientes (corrigido)
 
@@ -516,15 +577,12 @@ end. Resta:
    JPA crua no `POST`.
 5. **Itens de menor prioridade** (PENDENCIAS.md, ainda abertos no backend):
    filtro `pago=false` em `/pedidos` (o campo `pago` já existe na
-   resposta); reset de senha self-service (o admin já reseta); proteger
-   desativação/rebaixamento do último ADMIN ativo; política mínima de senha
-   no backend (hoje só o front exige 6 caracteres); `observacao` em
-   movimentação de estoque (B12); paginação de `/clientes` e `/veiculos`
-   (P17); **`Servico` ainda devolve a entidade crua em `POST/PUT/PATCH`**
-   (`Cliente` foi corrigido no B19; trocar por `ServicoResponse` tira
-   `codigoExterno` e acrescenta `pedidosNoMes` na resposta dessas rotas, por
-   isso não foi feito junto); `/error` sem acesso público faz erro 500
-   aparecer como 401.
+   resposta); reset de senha self-service (o admin já reseta);
+   `observacao` em movimentação de estoque (B12); paginação de `/clientes`
+   e `/veiculos` (P17); edição de item de estoque (nome/mínimo — hoje só
+   criação e movimentação). Fechados em 2026-11-11 (ver "Ajustes para o
+   teste final"): proteção do último ADMIN, política mínima de senha,
+   `ServicoResponse` nas escritas de serviço e o `401` indevido em erros.
 6. **Rastreabilidade: concluída** (ver a seção de 2026-10-07). Toda escrita
    de domínio exposta pela API grava autor com FK + snapshot do nome.
    Sobra só o fallback silencioso `"sistema"` do
