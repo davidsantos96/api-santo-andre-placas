@@ -34,7 +34,7 @@ cada reinicialização, e o usuário administrador é recriado no início.
 - Console do H2: `http://localhost:8080/h2-console`
   (URL JDBC `jdbc:h2:mem:santoandreplacas`, usuário `sa`, senha vazia)
 
-Usuário inicial em desenvolvimento: `admin@santoandreplacas.com.br` / `admin123`
+Usuário inicial em desenvolvimento: login `admin` (ou o e-mail `admin@santoandreplacas.com.br`) / senha `admin123`
 (veja as variáveis abaixo para trocar).
 
 ### Com PostgreSQL (Supabase)
@@ -54,7 +54,8 @@ migrations ainda (Flyway está na lista de pendências).
 |---|---|---|
 | `JWT_SECRET` | valor de desenvolvimento | Chave de assinatura dos tokens (mín. 32 caracteres) |
 | `ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Origens liberadas no CORS, separadas por vírgula |
-| `ADMIN_SEED_EMAIL` | `admin@santoandreplacas.com.br` | E-mail do administrador criado no primeiro start |
+| `ADMIN_SEED_LOGIN` | `admin` | Login do administrador criado no primeiro start |
+| `ADMIN_SEED_EMAIL` | `admin@santoandreplacas.com.br` | E-mail desse administrador (administradores precisam ter e-mail) |
 | `ADMIN_SEED_PASSWORD` | `admin123` | Senha desse administrador |
 | `ADMIN_SEED_NOME` | `Administrador` | Nome exibido |
 | `SUPABASE_DB_HOST` | — | Host do Postgres (perfil `supabase`) |
@@ -91,7 +92,7 @@ está no Swagger.
 
 | Recurso | Rotas | Papéis |
 |---|---|---|
-| Autenticação | `POST /api/auth/login` | público |
+| Autenticação | `POST /api/auth/login` (corpo `{login, senha}`; `login` aceita o login ou o e-mail) | público |
 | Clientes | `GET/POST /api/clientes`, `GET/PUT /api/clientes/{id}` | todos |
 | Veículos | `GET/POST /api/veiculos`, `GET/PUT /{id}`, `POST /{id}/consultar`, `GET /{id}/historico-consultas` | todos |
 | Serviços | `GET /api/servicos`, `GET /{id}` | todos |
@@ -142,3 +143,9 @@ src/main/java/br/com/santoandreplacas/apisantoandreplacas/
 docs/spec.md           especificação do sistema
 CONTEXT.md             decisões, padrões e pendências
 ```
+
+## Login e usuários
+
+- **Login de rede:** cada pessoa entra com um `login` próprio (ex.: `bruna.silva`: minúsculas, números, ponto, hífen ou underscore, 3 a 40 caracteres), sem precisar de e-mail pessoal. Quem tem e-mail também pode entrar digitando o e-mail. Nunca compartilhe login: a rastreabilidade (quem fez o quê) depende de um login por pessoa.
+- **E-mail** é opcional, mas **obrigatório para administradores** (os donos), porque é por ele que a recuperação de acesso será feita no futuro. Hoje a senha é redefinida por outro administrador; por isso mantenha pelo menos dois.
+- **Banco já existente:** na subida, `UsuarioLoginMigracao` tira o `NOT NULL` do e-mail e dá login a quem não tem (a parte antes do `@`). É uma ponte até as migrations do Flyway.

@@ -598,3 +598,27 @@ testada). Isso é background de estudo — não implica que todo código do
 projeto já usa essas features, mas explica por que soluções mais modernas
 (records, pattern matching, streams avançados) podem aparecer nos próximos
 módulos.
+
+## ✅ Login de rede separado do e-mail — 2026-11-12
+
+Decisão: a equipe entra com um **login** (como em login de rede), sem usar e-mail
+pessoal; só os donos (ADMIN) têm e-mail real.
+
+- `Usuario.login` (único, minúsculas, `^[a-z0-9][a-z0-9._-]{2,39}$`) e `email`
+  opcional (único sem diferenciar caixa; **obrigatório para ADMIN**). Quem entra
+  digita login ou e-mail: o `@` decide onde procurar (`UsuarioRepository.
+  buscarPorIdentificador`), sem ambiguidade porque login nunca tem `@`.
+- O assunto do JWT passou a ser o login; tokens antigos (assunto = e-mail)
+  continuam resolvendo. `POST /auth/login` aceita `login` e, por `@JsonAlias`, o
+  corpo antigo `email`. A resposta traz também `login`. Mensagem única
+  ("Usuário ou senha inválidos") para usuário inexistente e senha errada.
+- Não se altera o próprio login (derrubaria a sessão); a auditoria de usuário
+  descreve pelo login e ganhou o campo `login`.
+- **Migração (ponte até o Flyway):** `UsuarioLoginMigracao` roda na subida
+  (ordem 1, antes do seeder): `ALTER TABLE usuario ALTER COLUMN email DROP NOT
+  NULL` (o `ddl-auto=update` não relaxa restrição existente) e preenche o login de
+  quem não tem a partir do e-mail. Idempotente. Já aplicada no Supabase de teste:
+  o admin virou `admin`. Seed: `ADMIN_SEED_LOGIN` (padrão `admin`).
+- Ainda aberto, em ordem: limite de tentativas de login, perfil de produção que
+  desliga H2/Swagger e recusa segredos padrão, política de senha maior para ADMIN,
+  Flyway, usuário próprio do banco, e recuperação de senha por e-mail.
