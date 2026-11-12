@@ -1,5 +1,8 @@
 package br.com.santoandreplacas.apisantoandreplacas.estoque;
 import br.com.santoandreplacas.apisantoandreplacas.common.FusoHorario;
+import br.com.santoandreplacas.apisantoandreplacas.auditoria.AuditoriaService;
+import br.com.santoandreplacas.apisantoandreplacas.auditoria.EntidadeAuditada;
+import br.com.santoandreplacas.apisantoandreplacas.exception.RecursoNaoEncontradoException;
 
 import br.com.santoandreplacas.apisantoandreplacas.pedido.Pedido;
 import br.com.santoandreplacas.apisantoandreplacas.pedido.PedidoRepository;
@@ -20,19 +23,26 @@ public class EstoqueService {
     private final PedidoRepository pedidoRepository;
     private final ServicoRepository servicoRepository;
     private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
+    private final AuditoriaService auditoriaService;
+
+    // Nome do "campo" nas linhas de auditoria do serviço que registram a
+    // inclusão/remoção de um vínculo com item de estoque.
+    private static final String CAMPO_AUDITORIA_VINCULO = "itemEstoque";
 
     public EstoqueService(ItemEstoqueRepository itemEstoqueRepository,
                           MovimentacaoEstoqueRepository movimentacaoEstoqueRepository,
                           ServicoItemEstoqueRepository servicoItemEstoqueRepository,
                           PedidoRepository pedidoRepository,
                           ServicoRepository servicoRepository,
-                          UsuarioAutenticadoProvider usuarioAutenticadoProvider) {
+                          UsuarioAutenticadoProvider usuarioAutenticadoProvider,
+                          AuditoriaService auditoriaService) {
         this.itemEstoqueRepository = itemEstoqueRepository;
         this.movimentacaoEstoqueRepository = movimentacaoEstoqueRepository;
         this.servicoItemEstoqueRepository = servicoItemEstoqueRepository;
         this.pedidoRepository = pedidoRepository;
         this.servicoRepository = servicoRepository;
         this.usuarioAutenticadoProvider = usuarioAutenticadoProvider;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional(readOnly = true)
@@ -96,11 +106,23 @@ public class EstoqueService {
         return servicoItemEstoqueRepository.findByServicoId(servicoId);
     }
 
+    @Transactional
     public ServicoItemEstoque criarVinculo(NovoVinculoRequest request) {
+        if (request.servicoId() == null || request.itemEstoqueId() == null) {
+            throw new IllegalArgumentException("Informe o serviço e o item de estoque.");
+        }
+
         Servico servico = servicoRepository.findById(request.servicoId())
                 .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado: " + request.servicoId()));
         ItemEstoque item = itemEstoqueRepository.findById(request.itemEstoqueId())
                 .orElseThrow(() -> new IllegalArgumentException("Item de estoque não encontrado: " + request.itemEstoqueId()));
+
+        // Dois vínculos do mesmo item no mesmo serviço dariam baixa em dobro sem
+        // ninguém perceber. Para mudar a quantidade: remover e vincular de novo.
+        if (servicoItemEstoqueRepository.existsByServicoIdAndItemEstoqueId(servico.getId(), item.getId())) {
+            throw new IllegalArgumentException(
+                    "\"" + item.getNome() + "\" já está vinculado a este serviço. Remova o vínculo para mudar a quantidade.");
+        }
 
         ServicoItemEstoque vinculo = new ServicoItemEstoque();
         vinculo.setServico(servico);
@@ -110,7 +132,35 @@ public class EstoqueService {
         vinculo.setCriadoPor(usuarioAutenticadoProvider.nomeUsuarioAtual());
         vinculo.setCriadoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
 
-        return servicoItemEstoqueRepository.save(vinculo);
+        ServicoItemEstoque salvo = servicoItemEstoqueRepository.save(vinculo);
+
+        // Entra no histórico do serviço (mesma tela do preço): o vínculo decide o
+        // que sai do estoque a cada pedido, então mudar isso precisa deixar rastro.
+        auditoriaService.registrarAlteracao(EntidadeAuditada.SERVICO, servico.getId(), servico.getNome(),
+                CAMPO_AUDITORIA_VINCULO, null, descreverVinculo(salvo));
+
+        return salvo;
+    }
+
+    /**
+     * Remove o vínculo: o serviço deixa de dar baixa nesse item dali em diante.
+     * Não mexe nas movimentações já feitas. Como a linha some, o autor da
+     * remoção fica no histórico do serviço (auditoria).
+     */
+    @Transactional
+    public void removerVinculo(Long id) {
+        ServicoItemEstoque vinculo = servicoItemEstoqueRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Vínculo não encontrado: " + id));
+
+        Servico servico = vinculo.getServico();
+        auditoriaService.registrarAlteracao(EntidadeAuditada.SERVICO, servico.getId(), servico.getNome(),
+                CAMPO_AUDITORIA_VINCULO, descreverVinculo(vinculo), null);
+
+        servicoItemEstoqueRepository.delete(vinculo);
+    }
+
+    private String descreverVinculo(ServicoItemEstoque vinculo) {
+        return vinculo.getItemEstoque().getNome() + " × " + vinculo.getQuantidadeNecessaria();
     }
 
     private void aplicarMovimentacao(ItemEstoque item, TipoMovimentacao tipo, int quantidade) {

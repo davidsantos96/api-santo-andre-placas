@@ -24,7 +24,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
-        Usuario usuario = usuarioRepository.findByEmail(request.email())
+        if (request.email() == null || request.senha() == null) {
+            throw new IllegalArgumentException("Informe e-mail e senha.");
+        }
+
+        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(request.email().trim())
                 .orElseThrow(() -> new IllegalArgumentException("Email ou senha inválidos"));
 
         if (!passwordEncoder.matches(request.senha(), usuario.getSenhaHash())) {

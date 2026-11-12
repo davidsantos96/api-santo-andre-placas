@@ -60,4 +60,10 @@ public class EstoqueController {
     public VinculoServicoItemResponse criarVinculo(@RequestBody NovoVinculoRequest request) {
         return VinculoServicoItemResponse.fromEntity(estoqueService.criarVinculo(request));
     }
+
+    @DeleteMapping("/vinculos/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
+    public void removerVinculo(@PathVariable Long id) {
+        estoqueService.removerVinculo(id);
+    }
 }

@@ -5,4 +5,6 @@ import java.util.List;
 
 public interface ServicoItemEstoqueRepository extends JpaRepository<ServicoItemEstoque, Long> {
     List<ServicoItemEstoque> findByServicoId(Long servicoId);
+
+    boolean existsByServicoIdAndItemEstoqueId(Long servicoId, Long itemEstoqueId);
 }

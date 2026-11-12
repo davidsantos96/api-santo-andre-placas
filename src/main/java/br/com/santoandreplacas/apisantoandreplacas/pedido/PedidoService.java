@@ -113,13 +113,24 @@ public class PedidoService {
         return pedidoSalvo;
     }
 
+    // @Transactional: o pedido e a primeira linha do histórico (null → RECEBIDO)
+    // entram juntos ou não entram. Sem isso, uma falha ao gravar o histórico
+    // deixava um pedido sem registro de quem criou.
+    @Transactional
     public Pedido criarSimples(NovoPedidoRequest request) {
+        if (request.clienteId() == null || request.veiculoId() == null || request.servicoId() == null) {
+            throw new IllegalArgumentException("Informe o cliente, o veículo e o serviço do pedido.");
+        }
+
         Cliente cliente = clienteRepository.findById(request.clienteId())
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + request.clienteId()));
         Veiculo veiculo = veiculoRepository.findById(request.veiculoId())
                 .orElseThrow(() -> new IllegalArgumentException("Veículo não encontrado: " + request.veiculoId()));
-        Servico servico = servicoRepository.findById(request.servicoId())
-                .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado: " + request.servicoId()));
+        Servico servico = buscarServicoAtivo(request.servicoId());
+
+        if (!veiculo.getCliente().getId().equals(cliente.getId())) {
+            throw new IllegalArgumentException("O veículo informado não pertence a esse cliente.");
+        }
 
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
@@ -171,9 +182,11 @@ public class PedidoService {
     public Pedido criarPedidoCompleto(PedidoCompletoRequest request) {
 
         Cliente cliente = resolverCliente(request);
+        if (request.veiculo() == null) {
+            throw new IllegalArgumentException("Informe os dados do veículo.");
+        }
         Veiculo veiculo = criarVeiculo(request.veiculo(), cliente);
-        Servico servico = servicoRepository.findById(request.servicoId())
-                .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado: " + request.servicoId()));
+        Servico servico = buscarServicoAtivo(request.servicoId());
 
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
@@ -182,6 +195,20 @@ public class PedidoService {
         pedido.setOrigem(request.origem());
 
         return criar(pedido); // reaproveita o método que já força status = RECEBIDO
+    }
+
+    // Serviço desativado saiu da tabela de preços: não entra em pedido novo
+    // (os pedidos antigos que o referenciam continuam valendo).
+    private Servico buscarServicoAtivo(Long servicoId) {
+        if (servicoId == null) {
+            throw new IllegalArgumentException("Informe o serviço do pedido.");
+        }
+        Servico servico = servicoRepository.findById(servicoId)
+                .orElseThrow(() -> new IllegalArgumentException("Serviço não encontrado: " + servicoId));
+        if (!servico.isAtivo()) {
+            throw new IllegalArgumentException("O serviço \"" + servico.getNome() + "\" está inativo.");
+        }
+        return servico;
     }
 
     private Cliente resolverCliente(PedidoCompletoRequest request) {

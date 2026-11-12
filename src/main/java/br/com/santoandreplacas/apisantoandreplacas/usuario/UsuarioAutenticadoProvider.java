@@ -31,7 +31,7 @@ public class UsuarioAutenticadoProvider {
             return Optional.empty();
         }
 
-        return usuarioRepository.findByEmail(authentication.getName());
+        return usuarioRepository.findByEmailIgnoreCase(authentication.getName());
     }
 
     /** Nome do usuário autenticado, ou "sistema". Guardado como snapshot junto da FK. */

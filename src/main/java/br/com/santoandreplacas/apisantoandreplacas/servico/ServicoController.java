@@ -29,14 +29,14 @@ public class ServicoController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    public Servico criar(@RequestBody Servico servico) {
-        return servicoService.criar(servico);
+    public ServicoResponse criar(@RequestBody Servico servico) {
+        return servicoService.toResponse(servicoService.criar(servico));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    public Servico atualizar(@PathVariable Long id, @RequestBody Servico servico) {
-        return servicoService.atualizar(id, servico);
+    public ServicoResponse atualizar(@PathVariable Long id, @RequestBody Servico servico) {
+        return servicoService.toResponse(servicoService.atualizar(id, servico));
     }
 
     @DeleteMapping("/{id}")
@@ -47,7 +47,7 @@ public class ServicoController {
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    public Servico atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusServicoRequest request) {
-        return servicoService.atualizarStatus(id, request.ativo());
+    public ServicoResponse atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusServicoRequest request) {
+        return servicoService.toResponse(servicoService.atualizarStatus(id, request.ativo()));
     }
 }

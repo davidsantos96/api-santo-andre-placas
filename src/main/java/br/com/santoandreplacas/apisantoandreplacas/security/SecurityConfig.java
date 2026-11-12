@@ -1,5 +1,6 @@
 package br.com.santoandreplacas.apisantoandreplacas.security;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -56,6 +57,11 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // O forward interno para /error (feito pelo container quando algo
+                        // estoura fora dos controllers) não passa de novo pelo JwtAuthFilter;
+                        // se exigisse autenticação, todo erro viraria 401 e o front trataria
+                        // como sessão expirada. A requisição original já foi autorizada.
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()

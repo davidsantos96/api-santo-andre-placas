@@ -29,7 +29,12 @@ public class ClienteService {
 
     public List<Cliente> listar(String busca) {
         String termo = busca == null ? "" : busca.trim();
-        return clienteRepository.buscar(termo, termo.replaceAll("\\D", ""));
+        // Só compara por dígitos (telefone/CPF/CNPJ) quando a busca não tem letra:
+        // "Cliente E2E" é busca por nome, e o "2" solto casava com qualquer
+        // telefone ou documento que tivesse um 2 (B17).
+        boolean temLetra = termo.chars().anyMatch(Character::isLetter);
+        String digitos = temLetra ? "" : termo.replaceAll("\\D", "");
+        return clienteRepository.buscar(termo, digitos);
     }
 
     public Cliente buscarPorId(Long id) {

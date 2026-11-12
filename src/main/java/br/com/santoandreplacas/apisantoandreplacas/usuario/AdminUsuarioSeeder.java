@@ -29,7 +29,7 @@ public class AdminUsuarioSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (usuarioRepository.findByEmail(emailAdmin).isPresent()) {
+        if (usuarioRepository.findByEmailIgnoreCase(emailAdmin).isPresent()) {
             return;
         }
 

@@ -30,7 +30,8 @@ public class ServicoItemEstoque {
 
     private int quantidadeNecessaria;
 
-    // Só autoria de criação: não existe endpoint de edição nem de remoção do vínculo.
+    // Só autoria de criação: o vínculo não é editado (para mudar a quantidade,
+    // remove-se e cria-se outro). Quem removeu fica na auditoria do serviço.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "criado_por_usuario_id")
     private Usuario criadoPorUsuario;
