@@ -14,7 +14,15 @@ public class Usuario {
 
     private String nome;
 
-    @Column(unique = true, nullable = false)
+    // Identidade de quem entra no sistema (login de rede, ex.: "bruna.silva"). Sempre em
+    // minúsculas. A coluna aceita nulo só para o banco já existente receber o campo antes
+    // do preenchimento (UsuarioLoginMigracao); o serviço nunca cria usuário sem login.
+    @Column(unique = true)
+    private String login;
+
+    // Opcional: só os donos (ADMIN) precisam ter um e-mail real. Nulo é permitido, e a
+    // restrição única do banco aceita vários nulos.
+    @Column(unique = true)
     private String email;
 
     // Nunca serializar o hash: se alguma rota devolver a entidade (direto ou por
@@ -40,6 +48,14 @@ public class Usuario {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login == null ? null : login.trim().toLowerCase();
     }
 
     public String getEmail() {

@@ -19,12 +19,12 @@ public class JwtService {
 
     private final long expiracaoMs = 28_800_000; // 8 horas — cobre um turno de trabalho; sem refresh token (decisão registrada no CONTEXT.md)
 
-    public String gerarToken(String email, String papel) {
+    public String gerarToken(String login, String papel) {
         Date agora = new Date();
         Date expiracao = new Date(agora.getTime() + expiracaoMs);
 
         return Jwts.builder()
-                .subject(email)
+                .subject(login)
                 .claim("papel", papel)
                 .issuedAt(agora)
                 .expiration(expiracao)
@@ -32,7 +32,8 @@ public class JwtService {
                 .compact();
     }
 
-    public String extrairEmail(String token) {
+    /** Login do usuário (tokens emitidos antes do campo login trazem o e-mail; ambos são aceitos na busca). */
+    public String extrairLogin(String token) {
         return Jwts.parser()
                 .verifyWith(chave)
                 .build()

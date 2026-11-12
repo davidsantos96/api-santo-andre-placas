@@ -17,12 +17,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
+    public UserDetails loadUserByUsername(String identificador) throws UsernameNotFoundException {
+        Usuario usuario = usuarioRepository.buscarPorIdentificador(identificador)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + identificador));
 
         return new User(
-                usuario.getEmail(),
+                usuario.getLogin(),
                 usuario.getSenhaHash(),
                 usuario.isAtivo(), true, true, true,
                 List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getPapel()))

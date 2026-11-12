@@ -37,8 +37,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7); // remove o "Bearer " do começo
 
         if (jwtService.tokenValido(token)) {
-            String email = jwtService.extrairEmail(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            String login = jwtService.extrairLogin(token);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(login);
 
             // Se o usuário foi desativado depois que o token foi emitido, não
             // autentica — o token em si continua "válido" (assinatura/expiração

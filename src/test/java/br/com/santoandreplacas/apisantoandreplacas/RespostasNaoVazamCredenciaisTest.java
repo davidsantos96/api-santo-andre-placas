@@ -35,7 +35,7 @@ class RespostasNaoVazamCredenciaisTest {
     private String login(String email, String senha) throws Exception {
         return "Bearer " + json.readTree(mvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"senha\":\"" + senha + "\"}"))
+                        .content("{\"login\":\"" + email + "\",\"senha\":\"" + senha + "\"}"))
                 .andReturn().getResponse().getContentAsString()).get("token").asText();
     }
 
@@ -58,16 +58,17 @@ class RespostasNaoVazamCredenciaisTest {
 
     @Test
     void escrita_de_cliente_nao_expoe_hash_de_senha_e_traz_os_ids_de_autoria() throws Exception {
-        String admin = login("admin@santoandreplacas.com.br", "admin123");
+        String admin = login("admin", "admin123");
 
         Usuario u = new Usuario();
         u.setNome("Atendente Seguranca");
+        u.setLogin("seguranca");
         u.setEmail("seguranca@teste.com");
         u.setSenhaHash(passwordEncoder.encode("senha123"));
         u.setPapel(Papel.ATENDENTE);
         u.setAtivo(true);
         usuarioRepository.save(u);
-        String atendente = login("seguranca@teste.com", "senha123");
+        String atendente = login("seguranca", "senha123");
 
         // cliente criado pelo ADMIN: o autor na resposta do PUT é outra pessoa,
         // que era justamente o caso grave do B19

@@ -33,17 +33,17 @@ class ApiDeTeste {
         this.mvc = mvc;
     }
 
-    String login(String email, String senha) throws Exception {
+    String login(String login, String senha) throws Exception {
         Resposta r = chamar(MockMvcRequestBuilders.post("/api/auth/login"), null,
-                "{\"email\":\"" + email + "\",\"senha\":\"" + senha + "\"}");
+                "{\"login\":\"" + login + "\",\"senha\":\"" + senha + "\"}");
         if (r.status() != 200) {
-            throw new AssertionError("Login de " + email + " falhou: " + r.status() + " " + r.texto());
+            throw new AssertionError("Login de " + login + " falhou: " + r.status() + " " + r.texto());
         }
         return "Bearer " + r.corpo().get("token").asText();
     }
 
     String loginAdmin() throws Exception {
-        return login("admin@santoandreplacas.com.br", "admin123");
+        return login("admin", "admin123");
     }
 
     Resposta get(String rota, String token) throws Exception {

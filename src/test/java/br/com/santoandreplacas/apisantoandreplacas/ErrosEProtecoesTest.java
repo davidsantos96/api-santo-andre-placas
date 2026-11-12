@@ -29,11 +29,11 @@ class ErrosEProtecoesTest {
         admin = api.loginAdmin();
     }
 
-    private String criarELogar(String nome, String email, String papel) throws Exception {
+    private String criarELogar(String nome, String login, String papel) throws Exception {
         Resposta r = api.post("/api/usuarios", admin,
-                "{\"nome\":\"" + nome + "\",\"email\":\"" + email + "\",\"papel\":\"" + papel + "\",\"senha\":\"senha123\"}");
+                "{\"nome\":\"" + nome + "\",\"login\":\"" + login + "\",\"papel\":\"" + papel + "\",\"senha\":\"senha123\"}");
         assertEquals(200, r.status(), r.texto());
-        return api.login(email, "senha123");
+        return api.login(login, "senha123");
     }
 
     // O front trata 401 como "sessão expirada" e abre o modal de login. Então
@@ -70,7 +70,7 @@ class ErrosEProtecoesTest {
 
         // Sem permissão: 403 (e não 500, que é o que o handler genérico de
         // Exception faria se a negação do @PreAuthorize caísse nele).
-        String atendente = criarELogar("Atendente Erros", "atendente.erros@teste.com", "ATENDENTE");
+        String atendente = criarELogar("Atendente Erros", "atendente.erros", "ATENDENTE");
         for (String rota : new String[]{"/api/usuarios", "/api/pagamentos", "/api/dashboard/resumo", "/api/auditoria?entidade=SERVICO&entidadeId=1"}) {
             Resposta negado = api.get(rota, atendente);
             assertEquals(403, negado.status(), rota);
@@ -94,34 +94,107 @@ class ErrosEProtecoesTest {
         assertTrue(api.get("/api/clientes?busca=922222222", admin).corpo().size() >= 1, "telefone só com dígitos");
     }
 
-    // B18
+    // B18 (agora no login) + login de rede: a pessoa entra pelo login, sem e-mail pessoal.
     @Test
-    void email_de_usuario_nao_diferencia_maiusculas_de_minusculas() throws Exception {
-        criarELogar("Caixa Um", "caixa.um@teste.com", "ATENDENTE");
+    void login_nao_diferencia_maiusculas_e_aceita_login_ou_email_na_entrada() throws Exception {
+        criarELogar("Caixa Um", "caixa.um", "ATENDENTE");
 
         Resposta duplicado = api.post("/api/usuarios", admin,
-                "{\"nome\":\"Caixa Dois\",\"email\":\"CAIXA.UM@TESTE.COM\",\"papel\":\"ATENDENTE\",\"senha\":\"senha123\"}");
+                "{\"login\":\"CAIXA.UM\",\"nome\":\"Caixa Dois\",\"papel\":\"ATENDENTE\",\"senha\":\"senha123\"}");
         assertEquals(400, duplicado.status());
         assertTrue(duplicado.mensagem().contains("Já existe"), duplicado.mensagem());
 
-        // e quem digita o e-mail com outra caixa no login entra normalmente
-        assertNotNull(api.login("Caixa.Um@Teste.com", "senha123"));
+        // quem digita o login com outra caixa entra normalmente
+        assertNotNull(api.login("Caixa.Um", "senha123"));
+
+        // o formato antigo do corpo ({"email": ...}) continua sendo aceito
+        Resposta antigo = api.post("/api/auth/login", null, "{\"email\":\"caixa.um\",\"senha\":\"senha123\"}");
+        assertEquals(200, antigo.status(), antigo.texto());
+
+        // senha errada: mesma mensagem para usuário inexistente e senha errada (não revela qual)
+        Resposta senhaErrada = api.post("/api/auth/login", null, "{\"login\":\"caixa.um\",\"senha\":\"outra-senha\"}");
+        Resposta inexistente = api.post("/api/auth/login", null, "{\"login\":\"ninguem.assim\",\"senha\":\"senha123\"}");
+        assertEquals(400, senhaErrada.status());
+        assertEquals(senhaErrada.mensagem(), inexistente.mensagem());
+    }
+
+    @Test
+    void validacao_de_login_e_email_na_criacao_e_na_edicao() throws Exception {
+        String base = "\"nome\":\"Fulano\",\"papel\":\"ATENDENTE\",\"senha\":\"senha123\"";
+
+        for (String invalido : new String[]{"ab", "com espaco", "com@arroba", "Acentuação", "", "x".repeat(41)}) {
+            Resposta r = api.post("/api/usuarios", admin, "{\"login\":\"" + invalido + "\"," + base + "}");
+            assertEquals(400, r.status(), "login inválido deveria ser recusado: [" + invalido + "] " + r.texto());
+        }
+        assertEquals(400, api.post("/api/usuarios", admin, "{" + base + "}").status(), "sem login");
+
+        // e-mail é opcional, mas se vier precisa ser válido e único
+        assertEquals(400, api.post("/api/usuarios", admin, "{\"login\":\"fulano.a\",\"email\":\"nao-e-email\"," + base + "}").status());
+        Resposta comEmail = api.post("/api/usuarios", admin, "{\"login\":\"fulano.b\",\"email\":\"Fulano.B@Exemplo.com\"," + base + "}");
+        assertEquals(200, comEmail.status(), comEmail.texto());
+        assertEquals("fulano.b", comEmail.corpo().get("login").asText());
+        assertEquals(400, api.post("/api/usuarios", admin, "{\"login\":\"fulano.c\",\"email\":\"fulano.b@exemplo.com\"," + base + "}").status(),
+                "e-mail repetido (outra caixa)");
+        // dois usuários sem e-mail podem coexistir
+        assertEquals(200, api.post("/api/usuarios", admin, "{\"login\":\"fulano.d\"," + base + "}").status());
+        assertEquals(200, api.post("/api/usuarios", admin, "{\"login\":\"fulano.e\"," + base + "}").status());
+
+        // quem tem e-mail entra por login OU por e-mail
+        assertNotNull(api.login("fulano.b", "senha123"));
+        assertNotNull(api.login("FULANO.B@exemplo.com", "senha123"));
+
+        // ADMIN exige e-mail (recuperação de acesso)
+        Resposta adminSemEmail = api.post("/api/usuarios", admin,
+                "{\"login\":\"dono.sem.email\",\"nome\":\"Dono\",\"papel\":\"ADMIN\",\"senha\":\"senha123\"}");
+        assertEquals(400, adminSemEmail.status());
+        assertTrue(adminSemEmail.mensagem().contains("e-mail"), adminSemEmail.mensagem());
+        // (criar um ADMIN válido aqui mudaria o banco compartilhado dos testes e quebraria o teste do último admin)
+
+        // edição: trocar o login de outra pessoa funciona e o novo login passa a valer
+        long id = comEmail.id();
+        Resposta editado = api.put("/api/usuarios/" + id, admin,
+                "{\"login\":\"fulano.novo\",\"nome\":\"Fulano\",\"email\":\"fulano.b@exemplo.com\",\"papel\":\"ATENDENTE\"}");
+        assertEquals(200, editado.status(), editado.texto());
+        assertNotNull(api.login("fulano.novo", "senha123"));
+        assertEquals(400, api.post("/api/auth/login", null, "{\"login\":\"fulano.b\",\"senha\":\"senha123\"}").status(),
+                "login antigo deixa de valer");
+        // promover a ADMIN sem e-mail é recusado
+        assertEquals(400, api.put("/api/usuarios/" + api.post("/api/usuarios", admin, "{\"login\":\"promovido\"," + base + "}").id(), admin,
+                "{\"login\":\"promovido\",\"nome\":\"P\",\"papel\":\"ADMIN\"}").status());
+
+        // o próprio login não pode ser alterado (derrubaria a sessão de quem edita)
+        long adminId = -1;
+        for (var u : api.get("/api/usuarios", admin).corpo()) {
+            if ("admin".equals(u.get("login").asText())) adminId = u.get("id").asLong();
+        }
+        Resposta proprio = api.put("/api/usuarios/" + adminId, admin,
+                "{\"login\":\"admin2\",\"nome\":\"Administrador\",\"email\":\"admin@santoandreplacas.com.br\",\"papel\":\"ADMIN\"}");
+        assertEquals(400, proprio.status());
+        assertTrue(proprio.mensagem().contains("próprio login"), proprio.mensagem());
+    }
+
+    @Test
+    void usuario_antigo_sem_login_recebe_login_derivado_do_email_na_subida() throws Exception {
+        // O admin do seed prova o caminho feliz; o derivado vem da parte local do e-mail.
+        for (var u : api.get("/api/usuarios", admin).corpo()) {
+            assertFalse(u.get("login").isNull() || u.get("login").asText().isBlank(), "todo usuário tem login: " + u);
+        }
     }
 
     @Test
     void administracao_de_usuarios_tem_senha_minima_e_nao_deixa_o_sistema_sem_admin() throws Exception {
         Resposta senhaCurta = api.post("/api/usuarios", admin,
-                "{\"nome\":\"Curta\",\"email\":\"curta@teste.com\",\"papel\":\"ATENDENTE\",\"senha\":\"123\"}");
+                "{\"login\":\"curta\",\"nome\":\"Curta\",\"papel\":\"ATENDENTE\",\"senha\":\"123\"}");
         assertEquals(400, senhaCurta.status());
         assertTrue(senhaCurta.mensagem().contains("pelo menos 6"), senhaCurta.mensagem());
 
         Resposta semPapel = api.post("/api/usuarios", admin,
-                "{\"nome\":\"Sem Papel\",\"email\":\"sempapel@teste.com\",\"senha\":\"senha123\"}");
+                "{\"login\":\"sempapel\",\"nome\":\"Sem Papel\",\"senha\":\"senha123\"}");
         assertEquals(400, semPapel.status());
 
         long adminId = -1;
         for (var u : api.get("/api/usuarios", admin).corpo()) {
-            if ("admin@santoandreplacas.com.br".equals(u.get("email").asText())) {
+            if ("admin".equals(u.get("login").asText())) {
                 adminId = u.get("id").asLong();
             }
         }
@@ -135,7 +208,7 @@ class ErrosEProtecoesTest {
 
         // único ADMIN do banco de teste tentando virar GERENTE
         Resposta rebaixar = api.put("/api/usuarios/" + adminId, admin,
-                "{\"nome\":\"Administrador\",\"email\":\"admin@santoandreplacas.com.br\",\"papel\":\"GERENTE\"}");
+                "{\"login\":\"admin\",\"nome\":\"Administrador\",\"email\":\"admin@santoandreplacas.com.br\",\"papel\":\"GERENTE\"}");
         assertEquals(400, rebaixar.status());
         assertTrue(rebaixar.mensagem().contains("último administrador"), rebaixar.mensagem());
 
@@ -169,7 +242,7 @@ class ErrosEProtecoesTest {
                 "{\"servicoId\":" + servicoId + ",\"itemEstoqueId\":" + itemId + ",\"quantidadeNecessaria\":0}");
         assertEquals(400, quantidadeZero.status());
 
-        String atendente = criarELogar("Atendente Vinculo", "atendente.vinculo@teste.com", "ATENDENTE");
+        String atendente = criarELogar("Atendente Vinculo", "atendente.vinculo", "ATENDENTE");
         assertEquals(403, api.delete("/api/estoque/vinculos/" + criado.id(), atendente).status());
         assertEquals(1, api.get("/api/estoque/vinculos?servicoId=" + servicoId, atendente).corpo().size(),
                 "o atendente lê os vínculos (aviso de baixa no Kanban), só não altera");

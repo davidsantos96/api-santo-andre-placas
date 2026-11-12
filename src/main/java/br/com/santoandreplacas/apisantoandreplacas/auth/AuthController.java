@@ -24,15 +24,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
-        if (request.email() == null || request.senha() == null) {
-            throw new IllegalArgumentException("Informe e-mail e senha.");
+        if (request.login() == null || request.senha() == null) {
+            throw new IllegalArgumentException("Informe usuário e senha.");
         }
 
-        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(request.email().trim())
-                .orElseThrow(() -> new IllegalArgumentException("Email ou senha inválidos"));
+        Usuario usuario = usuarioRepository.buscarPorIdentificador(request.login())
+                .orElseThrow(() -> new IllegalArgumentException("Usuário ou senha inválidos"));
 
         if (!passwordEncoder.matches(request.senha(), usuario.getSenhaHash())) {
-            throw new IllegalArgumentException("Email ou senha inválidos");
+            throw new IllegalArgumentException("Usuário ou senha inválidos");
         }
 
         if (!usuario.isAtivo()) {
@@ -42,7 +42,7 @@ public class AuthController {
         usuario.setUltimoAcessoEm(LocalDateTime.now(FusoHorario.SAO_PAULO));
         usuarioRepository.save(usuario);
 
-        String token = jwtService.gerarToken(usuario.getEmail(), usuario.getPapel().name());
+        String token = jwtService.gerarToken(usuario.getLogin(),usuario.getPapel().name());
 
         return new LoginResponse(token, usuario.getPapel().name(), usuario.getNome());
     }
