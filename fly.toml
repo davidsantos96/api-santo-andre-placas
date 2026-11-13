@@ -1,21 +1,25 @@
-app = "santo-andre-placas-api"   # troque se o nome ja existir no Fly
-primary_region = "gru"
+# fly.toml app configuration file generated for api-santo-andre-placas on 2026-11-13T21:42:04Z
+#
+# See https://docs.fly.io/reference/configuration for information about how to use this file.
+#
+
+app = 'api-santo-andre-placas'
+primary_region = 'gru'
 
 [build]
-
 [env]
-  SPRING_PROFILES_ACTIVE = "prod"
-  ALLOWED_ORIGINS = "https://app.SEUDOMINIO.com.br"   # ajustar para a URL real do front
-  ADMIN_SEED_LOGIN = "admin"
-  ADMIN_SEED_EMAIL = "dono@SEUDOMINIO.com.br"          # e-mail real do dono
+  ADMIN_SEED_EMAIL = 'dono@SEUDOMINIO.com.br'
+  ADMIN_SEED_LOGIN = 'admin'
+  ALLOWED_ORIGINS = 'https://app.SEUDOMINIO.com.br'
+  SPRING_PROFILES_ACTIVE = 'prod'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "off"
+  auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "1gb"
+  size = 'shared-cpu-1x'
+  memory = '1gb'
