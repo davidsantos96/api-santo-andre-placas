@@ -622,3 +622,19 @@ pessoal; só os donos (ADMIN) têm e-mail real.
 - Ainda aberto, em ordem: limite de tentativas de login, perfil de produção que
   desliga H2/Swagger e recusa segredos padrão, política de senha maior para ADMIN,
   Flyway, usuário próprio do banco, e recuperação de senha por e-mail.
+
+## 🚀 Hospedagem — decisão de 2026-11-12 (a implementar)
+
+Front no **Cloudflare Pages**, API no **Fly.io (São Paulo)**, banco no **Supabase**
+(plano Pro: não pausa e tem backup diário), com o domínio que o cliente já possui
+(`app.` para o front, `api.` para a API). A API fica na mesma região do banco.
+A conta de cada serviço deve ficar em nome do cliente.
+
+Por que esses: Fly.io tem região em SP e aceita domínio próprio direto; o plano grátis
+do Cloudflare Pages aceita uso comercial (o Hobby da Vercel é só pessoal); o Supabase já
+está em uso. Alternativa descartada por ora: Google Cloud (US$ 300 de crédito por 90 dias).
+
+Falta fazer, em ordem: regra de SPA no front; Dockerfile e `fly.toml`; perfil de
+produção (sem H2/Swagger, recusa `JWT_SECRET` e senha do admin padrão); limite de
+tentativas de login; senha mínima maior para ADMIN; Flyway; usuário próprio do banco;
+`ALLOWED_ORIGINS` e `VITE_API_URL` por variável.
