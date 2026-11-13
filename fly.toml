@@ -10,7 +10,7 @@ primary_region = 'gru'
 [env]
   ADMIN_SEED_EMAIL = 'dono@SEUDOMINIO.com.br'
   ADMIN_SEED_LOGIN = 'admin'
-  ALLOWED_ORIGINS = 'https://app.SEUDOMINIO.com.br'
+  ALLOWED_ORIGINS = 'https://front-santo-andre-placas.davidpbarros96.workers.dev'
   SPRING_PROFILES_ACTIVE = 'prod'
 
 [http_service]
