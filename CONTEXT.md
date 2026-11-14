@@ -545,9 +545,8 @@ depois de confirmar, 6 cenários, todos verdes):
   subida, cria o usuário `ADMIN` se `app.seed.admin.email` ainda não
   existir (idempotente — testado reiniciando duas vezes contra o Supabase
   real, só insere na primeira). Credenciais configuráveis via
-  `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD`/`ADMIN_SEED_NOME`, com defaults
-  (`admin@santoandreplacas.com.br` / `admin123` / `Administrador`) em
-  `application.properties` — valem tanto pro H2 quanto pro Supabase.
+  `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD`/`ADMIN_SEED_NOME`, com defaults de
+  desenvolvimento em `application.properties` — valem tanto pro H2 quanto pro Supabase.
 - Testado ponta a ponta contra o banco real: subiu a app, o seeder
   inseriu o admin, `POST /api/auth/login` com essas credenciais devolveu
   token JWT válido com `papel: ADMIN`.
