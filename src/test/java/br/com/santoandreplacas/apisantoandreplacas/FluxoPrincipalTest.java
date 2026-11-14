@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureMockMvc
 class FluxoPrincipalTest {
 
+    static { ApiDeTeste.prepararSenhaAdmin(); }
+
     @Autowired MockMvc mvc;
     ApiDeTeste api;
     String admin;

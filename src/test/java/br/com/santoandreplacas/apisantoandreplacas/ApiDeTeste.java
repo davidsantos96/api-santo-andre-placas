@@ -16,6 +16,15 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
  */
 class ApiDeTeste {
 
+    private static final String PROP = "app.seed.admin.senha";
+
+    /** Chamado no static dos testes, antes do Spring subir: o admin nasce com senha aleatoria desta execucao. */
+    static synchronized void prepararSenhaAdmin() {
+        if (System.getProperty(PROP) == null) {
+            System.setProperty(PROP, java.util.UUID.randomUUID().toString());
+        }
+    }
+
     record Resposta(int status, JsonNode corpo, String texto) {
         String mensagem() {
             return corpo != null && corpo.has("mensagem") ? corpo.get("mensagem").asText() : null;
@@ -43,7 +52,7 @@ class ApiDeTeste {
     }
 
     String loginAdmin() throws Exception {
-        return login("admin", "admin123");
+        return login("admin", System.getProperty(PROP));
     }
 
     Resposta get(String rota, String token) throws Exception {

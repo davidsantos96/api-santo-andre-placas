@@ -6,6 +6,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class ApiSantoAndrePlacasApplicationTests {
 
+    static { ApiDeTeste.prepararSenhaAdmin(); }
+
     @Test
     void contextLoads() {
     }

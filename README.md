@@ -35,8 +35,9 @@ cada reinicialização, e o usuário administrador é recriado no início.
   (URL JDBC `jdbc:h2:mem:santoandreplacas`, usuário `sa`, senha vazia)
 
 Na primeira subida, se o banco não tiver nenhum administrador, a API cria um a partir
-das variáveis `ADMIN_SEED_*` (veja abaixo); em desenvolvimento elas têm valores padrão
-definidos em `application.properties`.
+das variáveis `ADMIN_SEED_*` (veja abaixo). Sem `ADMIN_SEED_PASSWORD`, em desenvolvimento ela
+gera uma senha aleatória e a mostra uma única vez no log da subida (procure por "senha gerada");
+em produção ela recusa subir.
 
 ### Com PostgreSQL (Supabase)
 
@@ -53,18 +54,18 @@ migrations ainda (Flyway está na lista de pendências).
 
 | Variável | Padrão | Para que serve |
 |---|---|---|
-| `JWT_SECRET` | valor de desenvolvimento | Chave de assinatura dos tokens (mín. 32 caracteres) |
+| `JWT_SECRET` | aleatória a cada execução (só em desenvolvimento) | Chave de assinatura dos tokens (mín. 32 caracteres) |
 | `ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Origens liberadas no CORS, separadas por vírgula |
 | `ADMIN_SEED_LOGIN` | `admin` | Login do administrador criado no primeiro start |
 | `ADMIN_SEED_EMAIL` | valor de desenvolvimento | E-mail desse administrador (administradores precisam ter e-mail) |
-| `ADMIN_SEED_PASSWORD` | valor de desenvolvimento | Senha desse administrador (em produção, mín. 10 caracteres) |
+| `ADMIN_SEED_PASSWORD` | gerada e mostrada no log (só em desenvolvimento) | Senha desse administrador (em produção é obrigatória, mín. 10 caracteres) |
 | `ADMIN_SEED_NOME` | `Administrador` | Nome exibido |
 | `SUPABASE_DB_HOST` | — | Host do Postgres (perfil `supabase`) |
 | `SUPABASE_DB_PASSWORD` | — | Senha do Postgres (perfil `supabase`) |
 | `SUPABASE_DB_PORT` / `_NAME` / `_USER` | `5432` / `postgres` / `postgres` | Demais dados de conexão |
 
 > **Antes de publicar em qualquer ambiente real:** defina `JWT_SECRET` e
-> `ADMIN_SEED_PASSWORD` (os padrões estão em `application.properties`), e saiba
+> `ADMIN_SEED_PASSWORD` (não há valores padrão em produção), e saiba
 > que `/h2-console` fica liberado sem login. Não use o perfil padrão (H2) fora
 > da sua máquina.
 

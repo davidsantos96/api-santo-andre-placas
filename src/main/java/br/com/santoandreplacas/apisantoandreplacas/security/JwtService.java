@@ -13,8 +13,16 @@ public class JwtService {
 
     private final SecretKey chave;
 
-    public JwtService(@Value("${app.jwt.secret}") String segredo) {
-        this.chave = Keys.hmacShaKeyFor(segredo.getBytes(StandardCharsets.UTF_8));
+    public JwtService(@Value("${app.jwt.secret:}") String segredo) {
+        if (segredo == null || segredo.isBlank()) {
+            // Sem JWT_SECRET (só em desenvolvimento; em produção o ProducaoSegura recusa):
+            // chave aleatória desta execução, os logins caem ao reiniciar.
+            byte[] aleatoria = new byte[48];
+            new java.security.SecureRandom().nextBytes(aleatoria);
+            this.chave = Keys.hmacShaKeyFor(aleatoria);
+        } else {
+            this.chave = Keys.hmacShaKeyFor(segredo.getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     private final long expiracaoMs = 28_800_000; // 8 horas — cobre um turno de trabalho; sem refresh token (decisão registrada no CONTEXT.md)

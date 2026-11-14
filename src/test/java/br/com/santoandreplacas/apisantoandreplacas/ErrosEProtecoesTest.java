@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureMockMvc
 class ErrosEProtecoesTest {
 
+    static { ApiDeTeste.prepararSenhaAdmin(); }
+
     @Autowired MockMvc mvc;
     ApiDeTeste api;
     String admin;

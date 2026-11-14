@@ -27,6 +27,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class RespostasNaoVazamCredenciaisTest {
 
+    static { ApiDeTeste.prepararSenhaAdmin(); }
+
     @Autowired MockMvc mvc;
     @Autowired UsuarioRepository usuarioRepository;
     @Autowired PasswordEncoder passwordEncoder;
@@ -58,7 +60,7 @@ class RespostasNaoVazamCredenciaisTest {
 
     @Test
     void escrita_de_cliente_nao_expoe_hash_de_senha_e_traz_os_ids_de_autoria() throws Exception {
-        String admin = login("admin", "admin123");
+        String admin = login("admin", System.getProperty("app.seed.admin.senha"));
 
         Usuario u = new Usuario();
         u.setNome("Atendente Seguranca");

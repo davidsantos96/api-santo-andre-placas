@@ -1,5 +1,6 @@
 package br.com.santoandreplacas.apisantoandreplacas.usuario;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -49,16 +50,25 @@ public class AdminUsuarioSeeder implements ApplicationRunner {
 
         // So aqui, quando o admin precisa nascer: em producao nao pode ser com senha padrao ou fraca.
         if (environment.acceptsProfiles(Profiles.of("prod"))
-                && ("admin123".equals(senhaAdmin) || senhaAdmin.length() < 10)) {
+                && (senhaAdmin.isBlank() || senhaAdmin.length() < 10)) {
             throw new IllegalStateException(
                     "Banco sem administrador: defina ADMIN_SEED_PASSWORD proprio (minimo 10 caracteres).");
+        }
+
+        String senha = senhaAdmin;
+        if (senha.isBlank()) {
+            // Desenvolvimento sem ADMIN_SEED_PASSWORD: gera uma senha e mostra uma unica vez no log.
+            senha = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+            LoggerFactory.getLogger(AdminUsuarioSeeder.class).warn(
+                    "Administrador '{}' criado com senha gerada: {} (defina ADMIN_SEED_PASSWORD para fixar)",
+                    loginAdmin, senha);
         }
 
         Usuario admin = new Usuario();
         admin.setLogin(loginAdmin);
         admin.setNome(nomeAdmin);
         admin.setEmail(emailAdmin);
-        admin.setSenhaHash(passwordEncoder.encode(senhaAdmin));
+        admin.setSenhaHash(passwordEncoder.encode(senha));
         admin.setPapel(Papel.ADMIN);
         admin.setAtivo(true);
 
